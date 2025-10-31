@@ -14,7 +14,7 @@
 # Build artifacts
 /bin/
 /dist/
-certfix
+/certfix
 certfix-*
 
 # Dependency directories

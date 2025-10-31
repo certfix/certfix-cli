@@ -23,7 +23,7 @@ func InitConfig(cfgFile string) {
 
 		// Create .certfix directory if it doesn't exist
 		configDir := filepath.Join(home, ".certfix")
-		if err := os.MkdirAll(configDir, 0755); err != nil {
+		if err := os.MkdirAll(configDir, 0700); err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating config directory: %v\n", err)
 			os.Exit(1)
 		}
@@ -64,7 +64,7 @@ func Set(key, value string) error {
 
 	// Create directory if it doesn't exist
 	configDir := filepath.Dir(configFile)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 

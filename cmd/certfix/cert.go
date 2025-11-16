@@ -12,7 +12,7 @@ import (
 var certCmd = &cobra.Command{
 	Use:   "cert",
 	Short: "Manage certificates",
-	Long:  `Create, renew, revoke, and manage SSL/TLS certificates.`,
+	Long:  `Create, revoke, and manage SSL/TLS certificates.`,
 }
 
 var certCreateCmd = &cobra.Command{
@@ -79,35 +79,6 @@ var certListCmd = &cobra.Command{
 	},
 }
 
-var certRenewCmd = &cobra.Command{
-	Use:   "renew [id]",
-	Short: "Renew a certificate",
-	Long:  `Renew an existing certificate by ID.`,
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		id := args[0]
-
-		log := logger.GetLogger()
-		log.Infof("Renewing certificate: %s", id)
-
-		// Check authentication
-		if !auth.IsAuthenticated() {
-			return fmt.Errorf("not authenticated, please run 'certfix login' first")
-		}
-
-		client := api.NewClient()
-		cert, err := client.RenewCertificate(id)
-		if err != nil {
-			log.WithError(err).Error("Failed to renew certificate")
-			return fmt.Errorf("failed to renew certificate: %w", err)
-		}
-
-		fmt.Printf("Certificate '%s' renewed successfully\n", id)
-		fmt.Printf("New expiration date: %s\n", cert.ExpiresAt)
-		return nil
-	},
-}
-
 var certRevokeCmd = &cobra.Command{
 	Use:   "revoke [id]",
 	Short: "Revoke a certificate",
@@ -139,6 +110,5 @@ func init() {
 	rootCmd.AddCommand(certCmd)
 	certCmd.AddCommand(certCreateCmd)
 	certCmd.AddCommand(certListCmd)
-	certCmd.AddCommand(certRenewCmd)
 	certCmd.AddCommand(certRevokeCmd)
 }

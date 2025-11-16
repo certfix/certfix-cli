@@ -115,9 +115,6 @@ certfix cert create example.com
 # List all certificates
 certfix cert list
 
-# Renew a certificate
-certfix cert renew <cert-id>
-
 # Revoke a certificate
 certfix cert revoke <cert-id>
 ```
@@ -159,9 +156,6 @@ certfix cert create <domain>
 
 # List certificates
 certfix cert list
-
-# Renew a certificate
-certfix cert renew <id>
 
 # Revoke a certificate
 certfix cert revoke <id>

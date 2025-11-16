@@ -2,10 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - main
-    # tags:
-    #   - "v*"
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -16,16 +14,28 @@ jobs:
     strategy:
       matrix:
         include:
+          # Linux builds
           - goos: linux
             goarch: amd64
-            name: certfix-cli-linux-amd64
+            name: certfix-linux-amd64
           - goos: linux
             goarch: arm64
-            name: certfix-cli-linux-arm64
+            name: certfix-linux-arm64
           - goos: linux
             goarch: arm
             goarm: "7"
-            name: certfix-cli-linux-armv7
+            name: certfix-linux-armv7
+          # macOS builds
+          - goos: darwin
+            goarch: amd64
+            name: certfix-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            name: certfix-darwin-arm64
+          # Windows builds
+          - goos: windows
+            goarch: amd64
+            name: certfix-windows-amd64.exe
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +43,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23
+          go-version: "1.24"
 
       - name: Build binary
         env:
@@ -42,7 +52,7 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: |
           mkdir -p build
-          go build -ldflags="-s -w" -o build/${{ matrix.name }} ./cmd
+          go build -ldflags="-X main.Version=${{ github.ref_name }} -s -w" -o build/${{ matrix.name }} .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -66,11 +76,11 @@ jobs:
         run: |
           mkdir -p release
           # Move all binaries to release directory
-          find artifacts -name "certfix-cli-*" -type f -exec cp {} release/ \;
-          # Create a default binary (x86_64) for backward compatibility
-          cp release/certfix-cli-linux-amd64 release/certfix-cli
-          # Make all binaries executable
-          chmod +x release/*
+          find artifacts -name "certfix-*" -type f -exec cp {} release/ \;
+          # Create a default binary (Linux x86_64) for backward compatibility
+          cp release/certfix-linux-amd64 release/certfix
+          # Make all binaries executable (except Windows .exe)
+          chmod +x release/certfix-*
           # Show what we have
           ls -la release/
 
@@ -85,29 +95,61 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             release/* \
             --title "Release ${GITHUB_REF_NAME}" \
-            --notes "## Release ${GITHUB_REF_NAME}
+            --notes "## CertFix CLI ${GITHUB_REF_NAME}
 
-          ### Supported Architectures:
-          - **certfix-cli-linux-amd64** - Linux x86_64
-          - **certfix-cli-linux-arm64** - Linux ARM64
-          - **certfix-cli-linux-armv7** - Linux ARMv7
-          - **certfix-cli** - Default binary (Linux x86_64)
+          ### Supported Platforms:
+
+          **Linux:**
+          - **certfix-linux-amd64** - Linux x86_64
+          - **certfix-linux-arm64** - Linux ARM64
+          - **certfix-linux-armv7** - Linux ARMv7
+          - **certfix** - Default binary (Linux x86_64)
+
+          **macOS:**
+          - **certfix-darwin-amd64** - macOS Intel
+          - **certfix-darwin-arm64** - macOS Apple Silicon (M1/M2/M3)
+
+          **Windows:**
+          - **certfix-windows-amd64.exe** - Windows x86_64
 
           ### Installation:
-          \`\`\`bash
-          # Auto-detect architecture and install
-          curl -fsSL https://raw.githubusercontent.com/certfix/certfix-cli/main/scripts/install.sh | sudo bash
 
-          # Or download specific architecture manually:
-          # For x86_64: wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-cli-linux-amd64
-          # For ARM64:  wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-cli-linux-arm64
-          # For ARMv7:  wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-cli-linux-armv7
+          **Linux:**
+          \`\`\`bash
+          # Download for your architecture
+          wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-linux-amd64
+          chmod +x certfix-linux-amd64
+          sudo mv certfix-linux-amd64 /usr/local/bin/certfix
+          \`\`\`
+
+          **macOS:**
+          \`\`\`bash
+          # For Intel Macs
+          wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-darwin-amd64
+          chmod +x certfix-darwin-amd64
+          sudo mv certfix-darwin-amd64 /usr/local/bin/certfix
+
+          # For Apple Silicon (M1/M2/M3)
+          wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/certfix-darwin-arm64
+          chmod +x certfix-darwin-arm64
+          sudo mv certfix-darwin-arm64 /usr/local/bin/certfix
+          \`\`\`
+
+          **Windows:**
+          Download **certfix-windows-amd64.exe** and add to your PATH.
 
           ### Verification:
           \`\`\`bash
           # Download and verify checksums
           wget https://github.com/certfix/certfix-cli/releases/download/${GITHUB_REF_NAME}/checksums.txt
           sha256sum -c checksums.txt
+          \`\`\`
+
+          ### Usage:
+          After installation, run:
+          \`\`\`bash
+          certfix --help
+          certfix version
           \`\`\`"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

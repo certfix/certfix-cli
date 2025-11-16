@@ -182,3 +182,18 @@ func (c *Client) RevokeCertificate(id string) error {
 	_, err = c.httpClient.DeleteWithAuth(fmt.Sprintf("/certificates/%s", id), token)
 	return err
 }
+
+// CreateBackup creates a backup of the Certificate Authority
+func (c *Client) CreateBackup() (map[string]interface{}, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.httpClient.PostWithAuth("/ca/backup", nil, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}

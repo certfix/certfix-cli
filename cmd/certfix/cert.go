@@ -1,6 +1,7 @@
 package certfix
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/certfix/certfix-cli/internal/api"
@@ -86,12 +87,16 @@ var certCreateCmd = &cobra.Command{
 }
 
 var certListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all certificates",
-	Long:  `List all certificates in your account.`,
+	Use:   "list [valid|revoked|expiring]",
+	Short: "List certificates",
+	Long: `List certificates by status:
+  - valid: List all valid certificates
+  - revoked: List all revoked certificates
+  - expiring <days>: List certificates expiring in the specified number of days`,
+	Args: cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		listType := args[0]
 		log := logger.GetLogger()
-		log.Info("Listing certificates")
 
 		// Check authentication
 		if !auth.IsAuthenticated() {
@@ -99,22 +104,59 @@ var certListCmd = &cobra.Command{
 		}
 
 		client := api.NewClient()
-		certs, err := client.ListCertificates()
+		var response []map[string]interface{}
+		var err error
+
+		switch listType {
+		case "valid":
+			log.Info("Listing valid certificates")
+			response, err = client.ListValidCertificates()
+		case "revoked":
+			log.Info("Listing revoked certificates")
+			response, err = client.ListRevokedCertificates()
+		case "expiring":
+			if len(args) < 2 {
+				return fmt.Errorf("missing days argument for 'expiring' command. Usage: cert list expiring <days>")
+			}
+			days := args[1]
+			log.Infof("Listing certificates expiring in %s days", days)
+			response, err = client.ListExpiringCertificates(days)
+		default:
+			return fmt.Errorf("invalid list type: %s. Use 'valid', 'revoked', or 'expiring <days>'", listType)
+		}
+
 		if err != nil {
 			log.WithError(err).Error("Failed to list certificates")
 			return fmt.Errorf("failed to list certificates: %w", err)
 		}
 
-		if len(certs) == 0 {
-			fmt.Println("No certificates found")
+		if len(response) == 0 {
+			fmt.Println("[]")
 			return nil
 		}
 
-		fmt.Println("Certificates:")
-		for _, cert := range certs {
-			fmt.Printf("  - %s (ID: %s, Status: %s, Expires: %s)\n",
-				cert.Domain, cert.ID, cert.Status, cert.ExpiresAt)
+		// Build simplified output with selected fields
+		output := []map[string]interface{}{}
+		for _, cert := range response {
+			simplified := map[string]interface{}{
+				"app_name":         cert["app_name"],
+				"unique_id":        cert["unique_id"],
+				"client_id":        cert["client_id"],
+				"certificate_type": cert["certificate_type"],
+				"expiration_date":  cert["expiration_date"],
+				"status":           cert["status"],
+				"revocation_date":  cert["revocation_date"],
+			}
+			output = append(output, simplified)
 		}
+
+		// Print as formatted JSON
+		jsonOutput, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format output: %w", err)
+		}
+		fmt.Println(string(jsonOutput))
+
 		return nil
 	},
 }

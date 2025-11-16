@@ -97,11 +97,25 @@ func (c *HTTPClient) request(method, endpoint string, payload interface{}, token
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(responseBody))
 	}
 
-	// Parse response
+	// Parse response - handle both objects and arrays
 	var result map[string]interface{}
 	if len(responseBody) > 0 {
-		if err := json.Unmarshal(responseBody, &result); err != nil {
-			return nil, fmt.Errorf("failed to parse response: %w", err)
+		// Check if response is an array
+		if len(responseBody) > 0 && responseBody[0] == '[' {
+			// Response is an array, wrap it in an object
+			var arrayResult []interface{}
+			if err := json.Unmarshal(responseBody, &arrayResult); err != nil {
+				return nil, fmt.Errorf("failed to parse response: %w", err)
+			}
+			result = map[string]interface{}{
+				"_is_array":    true,
+				"_array_data":  arrayResult,
+			}
+		} else {
+			// Response is an object
+			if err := json.Unmarshal(responseBody, &result); err != nil {
+				return nil, fmt.Errorf("failed to parse response: %w", err)
+			}
 		}
 	}
 

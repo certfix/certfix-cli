@@ -126,8 +126,8 @@ func (c *Client) CreateCertificate(commonName, certType, description string, day
 	return response, nil
 }
 
-// ListCertificates lists all certificates
-func (c *Client) ListCertificates() ([]*models.Certificate, error) {
+// ListValidCertificates lists all valid certificates
+func (c *Client) ListValidCertificates() ([]map[string]interface{}, error) {
 	token, err := auth.GetToken()
 	if err != nil {
 		return nil, err
@@ -138,7 +138,89 @@ func (c *Client) ListCertificates() ([]*models.Certificate, error) {
 		return nil, err
 	}
 
-	// Parse response into Certificate models
+	// Check if response is wrapped in a "certificates" key or is a direct array
+	if certs, ok := response["certificates"].([]interface{}); ok {
+		return convertToMapArray(certs), nil
+	}
+	
+	// If response has an "array" marker indicating direct array response
+	if response["_is_array"] != nil {
+		if arr, ok := response["_array_data"].([]interface{}); ok {
+			return convertToMapArray(arr), nil
+		}
+	}
+
+	return []map[string]interface{}{}, nil
+}
+
+// ListRevokedCertificates lists all revoked certificates
+func (c *Client) ListRevokedCertificates() ([]map[string]interface{}, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.httpClient.GetWithAuth("/certificates/revoked", token)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if response is wrapped in a "certificates" key or is a direct array
+	if certs, ok := response["certificates"].([]interface{}); ok {
+		return convertToMapArray(certs), nil
+	}
+	
+	// If response has an "array" marker indicating direct array response
+	if response["_is_array"] != nil {
+		if arr, ok := response["_array_data"].([]interface{}); ok {
+			return convertToMapArray(arr), nil
+		}
+	}
+
+	return []map[string]interface{}{}, nil
+}
+
+// ListExpiringCertificates lists certificates expiring in the specified number of days
+func (c *Client) ListExpiringCertificates(days string) ([]map[string]interface{}, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := fmt.Sprintf("/certificates?expiringInDays=%s", days)
+	response, err := c.httpClient.GetWithAuth(endpoint, token)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if response is wrapped in a "certificates" key or is a direct array
+	if certs, ok := response["certificates"].([]interface{}); ok {
+		return convertToMapArray(certs), nil
+	}
+	
+	// If response has an "array" marker indicating direct array response
+	if response["_is_array"] != nil {
+		if arr, ok := response["_array_data"].([]interface{}); ok {
+			return convertToMapArray(arr), nil
+		}
+	}
+
+	return []map[string]interface{}{}, nil
+}
+
+// convertToMapArray converts []interface{} to []map[string]interface{}
+func convertToMapArray(items []interface{}) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		if cert, ok := item.(map[string]interface{}); ok {
+			result = append(result, cert)
+		}
+	}
+	return result
+}
+
+// parseCertificatesList is a helper function to parse certificate list responses (deprecated)
+func parseCertificatesList(response map[string]interface{}) ([]*models.Certificate, error) {
 	certificates := []*models.Certificate{}
 	if items, ok := response["certificates"].([]interface{}); ok {
 		for _, item := range items {
@@ -155,6 +237,21 @@ func (c *Client) ListCertificates() ([]*models.Certificate, error) {
 	}
 
 	return certificates, nil
+}
+
+// ListCertificates lists all certificates (deprecated - kept for compatibility)
+func (c *Client) ListCertificates() ([]*models.Certificate, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.httpClient.GetWithAuth("/certificates", token)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseCertificatesList(response)
 }
 
 // RenewCertificate renews a certificate

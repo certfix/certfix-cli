@@ -323,3 +323,18 @@ func (c *Client) CreateBackup() (map[string]interface{}, error) {
 
 	return response, nil
 }
+
+// SyncCertificates synchronizes certificates with the CA
+func (c *Client) SyncCertificates() (map[string]interface{}, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.httpClient.PostWithAuth("/certificates/sync", nil, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}

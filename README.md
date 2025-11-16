@@ -56,7 +56,37 @@ make build-all
 
 ## Quick Start
 
-### 1. Login
+### 1. Configure API Endpoint
+
+Set up your Certfix CLI with the API endpoint and preferences:
+
+**Interactive mode:**
+
+```bash
+certfix configure
+```
+
+This will prompt you for:
+
+- API URL (default: https://api.certfix.io)
+- Timeout in seconds (default: 30)
+- Retry attempts (default: 3)
+
+**Non-interactive mode:**
+
+```bash
+certfix configure --api-url https://api.certfix.io --timeout 60 --retry-attempts 3
+```
+
+**View current configuration:**
+
+```bash
+certfix configure
+# or
+certfix config list
+```
+
+### 2. Login
 
 Authenticate with your Certfix account:
 
@@ -64,16 +94,17 @@ Authenticate with your Certfix account:
 certfix login --username your-email@example.com --password your-password
 ```
 
-### 2. Configure (Optional)
+### 3. Manage Configuration (Optional)
 
-Set custom configuration options:
+You can also use the `config` command to set individual values:
 
 ```bash
-certfix config set endpoint https://api.certfix.io
+certfix config set endpoint https://staging.certfix.io
+certfix config get endpoint
 certfix config list
 ```
 
-### 3. Manage Instances
+### 4. Manage Instances
 
 Create and manage instances:
 
@@ -88,7 +119,7 @@ certfix instance list
 certfix instance delete <instance-id>
 ```
 
-### 4. Manage Certificates
+### 5. Manage Certificates
 
 Handle SSL/TLS certificates:
 
@@ -108,6 +139,29 @@ certfix cert revoke <cert-id>
 
 ## Usage
 
+### Configuration Commands
+
+```bash
+# Interactive configuration (recommended)
+certfix configure
+
+# Configure with flags
+certfix configure --api-url <url> [--timeout <seconds>] [--retry-attempts <count>]
+
+# Examples
+certfix configure --api-url https://api.certfix.io
+certfix configure --api-url https://staging.certfix.io --timeout 90 --retry-attempts 5
+
+# Set individual configuration values
+certfix config set <key> <value>
+
+# Get a configuration value
+certfix config get <key>
+
+# List all configurations
+certfix config list
+```
+
 ### Authentication Commands
 
 ```bash
@@ -116,19 +170,6 @@ certfix login --username <username> --password <password> [--endpoint <url>]
 
 # Logout
 certfix logout
-```
-
-### Configuration Commands
-
-```bash
-# Set a configuration value
-certfix config set <key> <value>
-
-# Get a configuration value
-certfix config get <key>
-
-# List all configurations
-certfix config list
 ```
 
 ### Instance Commands
@@ -171,11 +212,11 @@ Configuration is stored in `~/.certfix/config.yaml` by default.
 
 ### Configuration Options
 
-| Key | Description | Default |
-|-----|-------------|---------|
-| `endpoint` | API endpoint URL | `https://api.certfix.io` |
-| `timeout` | Request timeout (seconds) | `30` |
-| `retry_attempts` | Number of retry attempts | `3` |
+| Key              | Description               | Default                  |
+| ---------------- | ------------------------- | ------------------------ |
+| `endpoint`       | API endpoint URL          | `https://api.certfix.io` |
+| `timeout`        | Request timeout (seconds) | `30`                     |
+| `retry_attempts` | Number of retry attempts  | `3`                      |
 
 ### Environment Variables
 
@@ -244,8 +285,44 @@ make clean
 # Run without building
 make dev
 
-# Or
-go run main.go
+# Or run directly with go
+go run main.go configure
+go run main.go version
+
+# Test the binary
+./bin/certfix configure
+./bin/certfix version
+```
+
+### Testing Locally
+
+```bash
+# Build and test
+make build
+./bin/certfix configure --api-url https://localhost:8080
+
+# Or use go run for quick testing
+go run main.go configure
+
+# Check configuration
+cat ~/.certfix/config.yaml
+```
+
+### Testing in Docker
+
+```bash
+# Build for Linux
+make build-linux
+
+# Test in Ubuntu container
+docker run -it --rm \
+  -v $(pwd)/dist/certfix-linux-amd64:/usr/local/bin/certfix \
+  ubuntu:latest certfix configure --api-url https://api.example.com
+
+# Interactive testing
+docker run -it --rm \
+  -v $(pwd)/dist/certfix-linux-amd64:/usr/local/bin/certfix \
+  ubuntu:latest /bin/bash
 ```
 
 ## Testing
@@ -307,6 +384,7 @@ This project is proprietary software. All rights reserved.
 ## Support
 
 For support, please contact:
+
 - Email: support@certfix.io
 - Documentation: https://docs.certfix.io
 - Issues: https://github.com/certfix/certfix-cli/issues

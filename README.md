@@ -6,7 +6,6 @@ A cross-platform command-line interface tool for managing certificates, applicat
 
 - 🔐 **Authentication**: Secure JWT-based authentication system
 - ⚙️ **Configuration Management**: Flexible configuration with Viper
-- 🖥️ **Instance Management**: Create, list, and delete instances
 - 📜 **Certificate Operations**: Create, renew, revoke, and manage SSL/TLS certificates
 - 📝 **Structured Logging**: Comprehensive logging with Logrus
 - 🌍 **Cross-Platform**: Compiled binaries for Linux, macOS, and Windows
@@ -82,8 +81,6 @@ certfix configure --api-url https://api.certfix.io --timeout 60 --retry-attempts
 
 ```bash
 certfix configure
-# or
-certfix config list
 ```
 
 ### 2. Login
@@ -107,32 +104,7 @@ This will securely prompt you for:
 certfix login --username your-email@example.com --password your-password
 ```
 
-### 3. Manage Configuration (Optional)
-
-You can also use the `config` command to set individual values:
-
-```bash
-certfix config set endpoint https://staging.certfix.io
-certfix config get endpoint
-certfix config list
-```
-
-### 4. Manage Instances
-
-Create and manage instances:
-
-```bash
-# Create an instance
-certfix instance create my-instance --type standard --region us-east-1
-
-# List all instances
-certfix instance list
-
-# Delete an instance
-certfix instance delete <instance-id>
-```
-
-### 5. Manage Certificates
+### 3. Manage Certificates
 
 Handle SSL/TLS certificates:
 
@@ -164,15 +136,6 @@ certfix configure --api-url <url> [--timeout <seconds>] [--retry-attempts <count
 # Examples
 certfix configure --api-url https://api.certfix.io
 certfix configure --api-url https://staging.certfix.io --timeout 90 --retry-attempts 5
-
-# Set individual configuration values
-certfix config set <key> <value>
-
-# Get a configuration value
-certfix config get <key>
-
-# List all configurations
-certfix config list
 ```
 
 ### Authentication Commands
@@ -186,19 +149,6 @@ certfix login --username <username> --password <password>
 
 # Logout
 certfix logout
-```
-
-### Instance Commands
-
-```bash
-# Create an instance
-certfix instance create <name> [--type <type>] [--region <region>]
-
-# List instances
-certfix instance list
-
-# Delete an instance
-certfix instance delete <id>
 ```
 
 ### Certificate Commands

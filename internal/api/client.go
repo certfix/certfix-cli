@@ -92,14 +92,30 @@ func (c *Client) DeleteInstance(id string) error {
 }
 
 // CreateCertificate creates a new certificate
-func (c *Client) CreateCertificate(domain string) (*models.Certificate, error) {
+func (c *Client) CreateCertificate(commonName, certType, description string, days, keySize int, san string) (map[string]interface{}, error) {
 	token, err := auth.GetToken()
 	if err != nil {
 		return nil, err
 	}
 
-	payload := map[string]string{
-		"domain": domain,
+	// Build payload with required fields
+	payload := map[string]interface{}{
+		"commonName": commonName,
+		"type":       certType,
+	}
+
+	// Add optional fields only if provided
+	if description != "" {
+		payload["description"] = description
+	}
+	if days > 0 {
+		payload["days"] = days
+	}
+	if keySize > 0 {
+		payload["keySize"] = keySize
+	}
+	if san != "" {
+		payload["san"] = san
 	}
 
 	response, err := c.httpClient.PostWithAuth("/certificates", payload, token)
@@ -107,15 +123,7 @@ func (c *Client) CreateCertificate(domain string) (*models.Certificate, error) {
 		return nil, err
 	}
 
-	// Parse response into Certificate model
-	cert := &models.Certificate{
-		ID:        fmt.Sprintf("%v", response["id"]),
-		Domain:    domain,
-		Status:    fmt.Sprintf("%v", response["status"]),
-		ExpiresAt: fmt.Sprintf("%v", response["expires_at"]),
-	}
-
-	return cert, nil
+	return response, nil
 }
 
 // ListCertificates lists all certificates

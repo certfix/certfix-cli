@@ -90,6 +90,19 @@ certfix config list
 
 Authenticate with your Certfix account:
 
+**Interactive mode (recommended):**
+
+```bash
+certfix login
+```
+
+This will securely prompt you for:
+
+- Username
+- Password (hidden input)
+
+**Non-interactive mode:**
+
 ```bash
 certfix login --username your-email@example.com --password your-password
 ```
@@ -165,8 +178,11 @@ certfix config list
 ### Authentication Commands
 
 ```bash
-# Login
-certfix login --username <username> --password <password> [--endpoint <url>]
+# Login (interactive - recommended)
+certfix login
+
+# Login (non-interactive)
+certfix login --username <username> --password <password>
 
 # Logout
 certfix logout

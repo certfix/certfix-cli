@@ -47,3 +47,4 @@ certfix config list
 # Remove the configurations
 
 cat ~/.certfix/config.yaml
+cat ~/.certfix/token.json

@@ -162,15 +162,18 @@ var certListCmd = &cobra.Command{
 }
 
 var certRevokeCmd = &cobra.Command{
-	Use:   "revoke [id]",
-	Short: "Revoke a certificate",
-	Long:  `Revoke an existing certificate by ID.`,
-	Args:  cobra.ExactArgs(1),
+	Use:   "revoke [unique-id|all]",
+	Short: "Revoke a certificate or all certificates",
+	Long: `Revoke a certificate by unique ID or revoke all certificates.
+  - revoke <unique-id>: Revoke a specific certificate
+  - revoke all: Revoke all certificates`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		id := args[0]
+		target := args[0]
+		cascade, _ := cmd.Flags().GetBool("cascade")
+		reason, _ := cmd.Flags().GetString("reason")
 
 		log := logger.GetLogger()
-		log.Infof("Revoking certificate: %s", id)
 
 		// Check authentication
 		if !auth.IsAuthenticated() {
@@ -178,12 +181,26 @@ var certRevokeCmd = &cobra.Command{
 		}
 
 		client := api.NewClient()
-		if err := client.RevokeCertificate(id); err != nil {
-			log.WithError(err).Error("Failed to revoke certificate")
-			return fmt.Errorf("failed to revoke certificate: %w", err)
+		var err error
+
+		if target == "all" {
+			log.Info("Revoking all certificates")
+			err = client.RevokeAllCertificates(reason)
+			if err != nil {
+				log.WithError(err).Error("Failed to revoke all certificates")
+				return fmt.Errorf("failed to revoke all certificates: %w", err)
+			}
+			fmt.Println("✓ All certificates revoked successfully")
+		} else {
+			log.Infof("Revoking certificate: %s", target)
+			err = client.RevokeCertificate(target, cascade, reason)
+			if err != nil {
+				log.WithError(err).Error("Failed to revoke certificate")
+				return fmt.Errorf("failed to revoke certificate: %w", err)
+			}
+			fmt.Printf("✓ Certificate '%s' revoked successfully\n", target)
 		}
 
-		fmt.Printf("Certificate '%s' revoked successfully\n", id)
 		return nil
 	},
 }
@@ -201,4 +218,8 @@ func init() {
 	certCreateCmd.Flags().IntP("key-size", "k", 0, "RSA key size in bits (optional)")
 	certCreateCmd.Flags().StringP("san", "s", "", "Subject Alternative Names, e.g., 'DNS:example.com,IP:192.168.1.1' (optional)")
 	certCreateCmd.MarkFlagRequired("type")
+
+	// Flags for cert revoke command
+	certRevokeCmd.Flags().BoolP("cascade", "c", true, "Cascade revocation (default: true)")
+	certRevokeCmd.Flags().StringP("reason", "r", "superseded", "Revocation reason (default: superseded)")
 }

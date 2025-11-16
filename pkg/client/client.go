@@ -52,6 +52,11 @@ func (c *HTTPClient) DeleteWithAuth(endpoint string, token string) (map[string]i
 	return c.request("DELETE", endpoint, nil, token)
 }
 
+// DeleteWithAuthAndPayload makes a DELETE request with authentication and payload
+func (c *HTTPClient) DeleteWithAuthAndPayload(endpoint string, payload interface{}, token string) (map[string]interface{}, error) {
+	return c.request("DELETE", endpoint, payload, token)
+}
+
 // request performs an HTTP request
 func (c *HTTPClient) request(method, endpoint string, payload interface{}, token string) (map[string]interface{}, error) {
 	log := logger.GetLogger()

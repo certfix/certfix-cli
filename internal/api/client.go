@@ -277,14 +277,35 @@ func (c *Client) RenewCertificate(id string) (*models.Certificate, error) {
 	return cert, nil
 }
 
-// RevokeCertificate revokes a certificate
-func (c *Client) RevokeCertificate(id string) error {
+// RevokeCertificate revokes a certificate by unique ID
+func (c *Client) RevokeCertificate(uniqueID string, cascade bool, reason string) error {
 	token, err := auth.GetToken()
 	if err != nil {
 		return err
 	}
 
-	_, err = c.httpClient.DeleteWithAuth(fmt.Sprintf("/certificates/%s", id), token)
+	payload := map[string]interface{}{
+		"uniqueId": uniqueID,
+		"cascade":  cascade,
+		"reason":   reason,
+	}
+
+	_, err = c.httpClient.DeleteWithAuthAndPayload("/certificates/", payload, token)
+	return err
+}
+
+// RevokeAllCertificates revokes all certificates
+func (c *Client) RevokeAllCertificates(reason string) error {
+	token, err := auth.GetToken()
+	if err != nil {
+		return err
+	}
+
+	payload := map[string]interface{}{
+		"reason": reason,
+	}
+
+	_, err = c.httpClient.DeleteWithAuthAndPayload("/certificates/all", payload, token)
 	return err
 }
 

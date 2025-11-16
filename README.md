@@ -1,12 +1,14 @@
 # Certfix CLI
 
-A cross-platform command-line interface tool for managing certificates, application configurations, and infrastructure operations. Built with Go and designed to work seamlessly on Linux, macOS, and Windows.
+A cross-platform command-line interface tool for managing SSL/TLS certificates and Certificate Authority operations. Built with Go and designed to work seamlessly on Linux, macOS, and Windows.
 
 ## Features
 
 - 🔐 **Authentication**: Secure JWT-based authentication system
 - ⚙️ **Configuration Management**: Flexible configuration with Viper
-- 📜 **Certificate Operations**: Create, renew, revoke, and manage SSL/TLS certificates
+- 📜 **Certificate Operations**: Create, list, and revoke SSL/TLS certificates (server and client)
+- 🔄 **Synchronization**: Sync certificates with the Certificate Authority
+- 💾 **Backup**: Create CA backups
 - 📝 **Structured Logging**: Comprehensive logging with Logrus
 - 🌍 **Cross-Platform**: Compiled binaries for Linux, macOS, and Windows
 
@@ -104,71 +106,339 @@ This will securely prompt you for:
 certfix login --username your-email@example.com --password your-password
 ```
 
-### 3. Manage Certificates
+### 3. Create Certificates
 
-Handle SSL/TLS certificates:
+Create server or client certificates:
 
 ```bash
-# Create a certificate
-certfix cert create example.com
+# Create a server certificate
+certfix cert create webapp-prod --type server --days 365
 
-# List all certificates
-certfix cert list
+# Create a client certificate
+certfix cert create client-app --type client --days 90
+```
 
-# Revoke a certificate
-certfix cert revoke <cert-id>
+### 4. Manage Certificates
+
+List and manage your certificates:
+
+```bash
+# List valid certificates
+certfix cert list valid
+
+# List revoked certificates
+certfix cert list revoked
+
+# List expiring certificates (next 30 days)
+certfix cert list expiring 30
+```
+
+### 5. Synchronize & Backup
+
+```bash
+# Sync certificates with CA
+certfix sync
+
+# Create a backup
+certfix backup
 ```
 
 ## Usage
 
 ### Configuration Commands
 
+#### `certfix configure`
+
+Configure the CLI with API endpoint and settings.
+
+**Interactive mode:**
+
 ```bash
-# Interactive configuration (recommended)
 certfix configure
-
-# Configure with flags
-certfix configure --api-url <url> [--timeout <seconds>] [--retry-attempts <count>]
-
-# Examples
-certfix configure --api-url https://api.certfix.io
-certfix configure --api-url https://staging.certfix.io --timeout 90 --retry-attempts 5
 ```
+
+**Non-interactive mode:**
+
+```bash
+certfix configure [flags]
+```
+
+**Flags:**
+
+- `--api-url, -a <url>` - API endpoint URL (e.g., https://api.certfix.io)
+- `--timeout, -t <seconds>` - Request timeout in seconds
+- `--retry-attempts, -r <count>` - Number of retry attempts for failed requests
+
+**Examples:**
+
+```bash
+# Configure with all options
+certfix configure --api-url https://api.certfix.io --timeout 60 --retry-attempts 5
+
+# Configure only API URL
+certfix configure -a https://staging.certfix.io
+
+# View current configuration (run without flags)
+certfix configure
+```
+
+---
 
 ### Authentication Commands
 
+#### `certfix login`
+
+Authenticate with the Certfix API.
+
+**Interactive mode (recommended):**
+
 ```bash
-# Login (interactive - recommended)
+certfix login
+```
+
+**Non-interactive mode:**
+
+```bash
+certfix login [flags]
+```
+
+**Flags:**
+
+- `--username, -u <username>` - Username for authentication
+- `--password, -p <password>` - Password for authentication
+
+**Examples:**
+
+```bash
+# Interactive login (password hidden)
 certfix login
 
-# Login (non-interactive)
-certfix login --username <username> --password <password>
+# Non-interactive login
+certfix login --username admin@example.com --password mypassword
+```
 
-# Logout
+**Note:** Requires API endpoint to be configured first via `certfix configure`.
+
+---
+
+#### `certfix logout`
+
+Remove stored authentication token.
+
+```bash
 certfix logout
 ```
 
+---
+
 ### Certificate Commands
 
+#### `certfix cert create`
+
+Create a new SSL/TLS certificate (server or client).
+
 ```bash
-# Create a certificate
-certfix cert create <domain>
+certfix cert create <common-name> [flags]
+```
 
-# List certificates
-certfix cert list
+**Required Flags:**
 
-# Revoke a certificate
-certfix cert revoke <id>
+- `--type, -t <type>` - Certificate type: `server` or `client`
+
+**Optional Flags:**
+
+- `--description, -d <text>` - Certificate description
+- `--days <number>` - Validity period in days
+- `--key-size, -k <bits>` - RSA key size in bits (e.g., 2048, 4096)
+- `--san, -s <names>` - Subject Alternative Names (format: `DNS:example.com,IP:192.168.1.1`)
+
+**Examples:**
+
+```bash
+# Create server certificate (minimal)
+certfix cert create webapp-prod --type server
+
+# Create server certificate with all options
+certfix cert create webapp-prod \
+  --type server \
+  --description "Production Web Server" \
+  --days 365 \
+  --key-size 2048 \
+  --san "DNS:webapp.local,DNS:webapp.example.com,IP:192.168.1.100"
+
+# Create client certificate
+certfix cert create mobile-app-client \
+  --type client \
+  --description "Mobile app client certificate" \
+  --days 90
+```
+
+**Output:**
+
+```
+✓ Certificate created successfully
+Unique ID:     20251116-225759-c28b
+Serial Number: 1001
+App Name:      webapp-prod
+```
+
+---
+
+#### `certfix cert list`
+
+List certificates by status.
+
+```bash
+certfix cert list <type> [days]
+```
+
+**Types:**
+
+- `valid` - List all valid certificates
+- `revoked` - List all revoked certificates
+- `expiring <days>` - List certificates expiring in specified days
+
+**Examples:**
+
+```bash
+# List valid certificates
+certfix cert list valid
+
+# List revoked certificates
+certfix cert list revoked
+
+# List certificates expiring in next 30 days
+certfix cert list expiring 30
+
+# List certificates expiring in next 7 days
+certfix cert list expiring 7
+```
+
+**Output (JSON):**
+
+```json
+[
+  {
+    "app_name": "webapp-prod",
+    "unique_id": "20251116-225759-c28b",
+    "client_id": "N/A",
+    "certificate_type": "server",
+    "expiration_date": "2026-11-16 22:57:59",
+    "status": "valid",
+    "revocation_date": null
+  }
+]
+```
+
+---
+
+#### `certfix cert revoke`
+
+Revoke a certificate or all certificates.
+
+```bash
+certfix cert revoke <unique-id|all> [flags]
+```
+
+**Flags:**
+
+- `--cascade, -c` - Cascade revocation (default: true)
+- `--reason, -r <reason>` - Revocation reason (default: superseded)
+
+**Examples:**
+
+```bash
+# Revoke specific certificate (default options)
+certfix cert revoke 20251116-225759-c28b
+
+# Revoke with custom options
+certfix cert revoke 20251116-225759-c28b --cascade=false --reason="keyCompromise"
+
+# Revoke all certificates
+certfix cert revoke all
+
+# Revoke all with custom reason
+certfix cert revoke all --reason="unspecified"
+```
+
+**Output:**
+
+```
+✓ Certificate '20251116-225759-c28b' revoked successfully
+```
+
+---
+
+### Utility Commands
+
+#### `certfix sync`
+
+Synchronize certificates with the Certificate Authority.
+
+```bash
+certfix sync
+```
+
+**Output:**
+
+```
+✓ Synchronization successful
+Synced: 3 certificates
+```
+
+---
+
+#### `certfix backup`
+
+Create a backup of the Certificate Authority.
+
+```bash
+certfix backup
+```
+
+**Output:**
+
+```
+Backup status: success
+```
+
+---
+
+#### `certfix version`
+
+Display the CLI version.
+
+```bash
+certfix version
+```
+
+**Output:**
+
+```
+Certfix CLI v1.0.0
 ```
 
 ## Global Flags
 
-- `--config <path>`: Specify a custom config file (default: `~/.certfix/config.yaml`)
-- `--verbose, -v`: Enable verbose output for debugging
+Available for all commands:
 
-## Configuration
+- `--config <path>` - Specify a custom config file (default: `~/.certfix/config.yaml`)
+- `--verbose, -v` - Enable verbose output for debugging
 
-Configuration is stored in `~/.certfix/config.yaml` by default.
+**Example:**
+
+```bash
+certfix --verbose cert list valid
+certfix --config /custom/path/config.yaml login
+```
+
+---
+
+## Configuration Files
+
+### Config File Location
+
+Default: `~/.certfix/config.yaml`
 
 ### Configuration Options
 
@@ -186,6 +456,56 @@ You can also use environment variables with the `CERTFIX_` prefix:
 export CERTFIX_ENDPOINT=https://api.certfix.io
 export CERTFIX_TIMEOUT=60
 ```
+
+### Token Storage
+
+Authentication tokens are stored in `~/.certfix/token.json` with restricted permissions (0600).
+
+**Example token file:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_at": "2025-11-17T10:30:00Z"
+}
+```
+
+---
+
+## Command Reference
+
+### Complete Command Tree
+
+```
+certfix
+├── configure              # Configure API settings
+│   ├── --api-url, -a     # API endpoint URL
+│   ├── --timeout, -t     # Request timeout
+│   └── --retry-attempts, -r  # Retry attempts
+├── login                  # Authenticate
+│   ├── --username, -u    # Username
+│   └── --password, -p    # Password
+├── logout                 # Remove auth token
+├── backup                 # Create CA backup
+├── sync                   # Sync certificates
+├── cert                   # Certificate management
+│   ├── create <name>     # Create certificate
+│   │   ├── --type, -t    # server or client (required)
+│   │   ├── --description, -d  # Description
+│   │   ├── --days        # Validity days
+│   │   ├── --key-size, -k  # RSA key size
+│   │   └── --san, -s     # Subject Alternative Names
+│   ├── list <type>       # List certificates
+│   │   ├── valid         # List valid certs
+│   │   ├── revoked       # List revoked certs
+│   │   └── expiring <days>  # List expiring certs
+│   └── revoke <id|all>   # Revoke certificate
+│       ├── --cascade, -c # Cascade revocation
+│       └── --reason, -r  # Revocation reason
+└── version                # Show version
+```
+
+---
 
 ## Architecture
 
@@ -285,26 +605,7 @@ docker run -it --rm \
   ubuntu:latest /bin/bash
 ```
 
-## Testing
-
-```bash
-# Run all tests
-make test
-
-# Run tests with verbose output
-go test -v ./...
-
-# Run tests with coverage
-go test -cover ./...
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
 ## Security
 
@@ -319,23 +620,40 @@ go test -cover ./...
 
 ```bash
 # Enable verbose logging
-certfix --verbose login --username user --password pass
+certfix --verbose login
 
 # Re-authenticate
 certfix logout
-certfix login --username user --password pass
+certfix login
 ```
 
 ### Configuration Issues
 
 ```bash
-# Check current configuration
-certfix config list
+# View current configuration
+certfix configure
 
 # Reset configuration
 rm ~/.certfix/config.yaml
-certfix config set endpoint https://api.certfix.io
+certfix configure --api-url https://api.certfix.io
 ```
+
+### API Endpoint Not Configured
+
+If you see this error when trying to login:
+
+```
+⚠ No API endpoint configured.
+Please run 'certfix configure' first to set up your API endpoint.
+```
+
+**Solution:**
+
+```bash
+certfix configure --api-url https://api.certfix.io
+```
+
+---
 
 ## License
 

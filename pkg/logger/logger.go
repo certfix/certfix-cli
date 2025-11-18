@@ -19,7 +19,7 @@ func InitLogger(verbose bool) {
 	if verbose {
 		log.SetLevel(logrus.DebugLevel)
 	} else {
-		log.SetLevel(logrus.InfoLevel)
+		log.SetLevel(logrus.WarnLevel)
 	}
 
 	// Set formatter

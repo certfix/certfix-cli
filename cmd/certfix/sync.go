@@ -26,8 +26,9 @@ var syncCmd = &cobra.Command{
 		client := api.NewClient()
 		response, err := client.SyncCertificates()
 		if err != nil {
-			log.WithError(err).Error("Failed to synchronize certificates")
-			return fmt.Errorf("failed to synchronize certificates: %w", err)
+			cmd.SilenceUsage = true
+			log.Debug("Failed to synchronize certificates: ", err)
+			return fmt.Errorf("failed to synchronize certificates")
 		}
 
 		// Display success and synced count

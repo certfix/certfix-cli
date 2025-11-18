@@ -26,8 +26,9 @@ var backupCmd = &cobra.Command{
 		client := api.NewClient()
 		response, err := client.CreateBackup()
 		if err != nil {
-			log.WithError(err).Error("Failed to create backup")
-			return fmt.Errorf("failed to create backup: %w", err)
+			cmd.SilenceUsage = true
+			log.Debug("Failed to create backup: ", err)
+			return fmt.Errorf("failed to create backup")
 		}
 
 		// Display only the status

@@ -56,7 +56,7 @@ var certCreateCmd = &cobra.Command{
 		if err != nil {
 			cmd.SilenceUsage = true
 			log.Debug("Failed to create certificate: ", err)
-			return fmt.Errorf("failed to create certificate")
+			return err
 		}
 
 		// Display certificate information
@@ -141,7 +141,7 @@ var certListCmd = &cobra.Command{
 		if err != nil {
 			cmd.SilenceUsage = true
 			log.Debug("Failed to list certificates: ", err)
-			return fmt.Errorf("failed to list certificates")
+			return err
 		}
 
 		if len(response) == 0 {
@@ -203,7 +203,7 @@ var certRevokeCmd = &cobra.Command{
 			if err != nil {
 				cmd.SilenceUsage = true
 				log.Debug("Failed to revoke all certificates: ", err)
-				return fmt.Errorf("failed to revoke all certificates")
+				return err
 			}
 			fmt.Println("✓ All certificates revoked successfully")
 		} else {
@@ -212,7 +212,7 @@ var certRevokeCmd = &cobra.Command{
 			if err != nil {
 				cmd.SilenceUsage = true
 				log.Debug("Failed to revoke certificate: ", err)
-				return fmt.Errorf("failed to revoke certificate")
+				return err
 			}
 			fmt.Printf("✓ Certificate '%s' revoked successfully\n", target)
 		}

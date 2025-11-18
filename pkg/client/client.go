@@ -100,18 +100,18 @@ func (c *HTTPClient) request(method, endpoint string, payload interface{}, token
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Debugf("Response status: %d, body: %s", resp.StatusCode, string(responseBody))
 		
-		// Special handling for 500 errors - extract message from details object
-		if resp.StatusCode == 500 {
-			var errorResponse map[string]interface{}
-			if err := json.Unmarshal(responseBody, &errorResponse); err == nil {
-				if details, ok := errorResponse["details"].(map[string]interface{}); ok {
-					if message, ok := details["message"].(string); ok {
-						return nil, fmt.Errorf("%s", message)
-					}
+		// Extract message from standardized error response format
+		var errorResponse map[string]interface{}
+		if err := json.Unmarshal(responseBody, &errorResponse); err == nil {
+			// Check for details.message pattern
+			if details, ok := errorResponse["details"].(map[string]interface{}); ok {
+				if message, ok := details["message"].(string); ok {
+					return nil, fmt.Errorf("%s", message)
 				}
 			}
 		}
 		
+		// Fallback to full error message
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(responseBody))
 	}
 

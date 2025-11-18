@@ -28,7 +28,7 @@ var backupCmd = &cobra.Command{
 		if err != nil {
 			cmd.SilenceUsage = true
 			log.Debug("Failed to create backup: ", err)
-			return fmt.Errorf("failed to create backup")
+			return err
 		}
 
 		// Display only the status

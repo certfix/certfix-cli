@@ -31,6 +31,7 @@ var certCreateCmd = &cobra.Command{
 
 		// Validate certificate type
 		if certType != "server" && certType != "client" {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("invalid certificate type: %s (must be 'server' or 'client')", certType)
 		}
 
@@ -46,8 +47,9 @@ var certCreateCmd = &cobra.Command{
 		client := api.NewClient()
 		response, err := client.CreateCertificate(commonName, certType, description, days, keySize, san)
 		if err != nil {
-			log.WithError(err).Error("Failed to create certificate")
-			return fmt.Errorf("failed to create certificate: %w", err)
+			cmd.SilenceUsage = true
+			log.Debug("Failed to create certificate: ", err)
+			return fmt.Errorf("failed to create certificate")
 		}
 
 		// Display certificate information
@@ -118,18 +120,21 @@ var certListCmd = &cobra.Command{
 			response, err = client.ListRevokedCertificates()
 		case "expiring":
 			if len(args) < 2 {
+				cmd.SilenceUsage = true
 				return fmt.Errorf("missing days argument for 'expiring' command. Usage: cert list expiring <days>")
 			}
 			days := args[1]
 			log.Infof("Listing certificates expiring in %s days", days)
 			response, err = client.ListExpiringCertificates(days)
 		default:
+			cmd.SilenceUsage = true
 			return fmt.Errorf("invalid list type: %s. Use 'valid', 'revoked', or 'expiring <days>'", listType)
 		}
 
 		if err != nil {
-			log.WithError(err).Error("Failed to list certificates")
-			return fmt.Errorf("failed to list certificates: %w", err)
+			cmd.SilenceUsage = true
+			log.Debug("Failed to list certificates: ", err)
+			return fmt.Errorf("failed to list certificates")
 		}
 
 		if len(response) == 0 {

@@ -201,16 +201,18 @@ var certRevokeCmd = &cobra.Command{
 			log.Info("Revoking all certificates")
 			err = client.RevokeAllCertificates(reason)
 			if err != nil {
-				log.WithError(err).Error("Failed to revoke all certificates")
-				return fmt.Errorf("failed to revoke all certificates: %w", err)
+				cmd.SilenceUsage = true
+				log.Debug("Failed to revoke all certificates: ", err)
+				return fmt.Errorf("failed to revoke all certificates")
 			}
 			fmt.Println("✓ All certificates revoked successfully")
 		} else {
 			log.Infof("Revoking certificate: %s", target)
 			err = client.RevokeCertificate(target, cascade, reason)
 			if err != nil {
-				log.WithError(err).Error("Failed to revoke certificate")
-				return fmt.Errorf("failed to revoke certificate: %w", err)
+				cmd.SilenceUsage = true
+				log.Debug("Failed to revoke certificate: ", err)
+				return fmt.Errorf("failed to revoke certificate")
 			}
 			fmt.Printf("✓ Certificate '%s' revoked successfully\n", target)
 		}

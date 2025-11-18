@@ -14,13 +14,14 @@ var backupCmd = &cobra.Command{
 	Short: "Create a backup of the Certificate Authority",
 	Long:  `Create a complete backup of the CA including certificates, private keys, and configuration.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log := logger.GetLogger()
-		log.Info("Creating CA backup...")
-
 		// Check authentication
 		if !auth.IsAuthenticated() {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("not authenticated, please run 'certfix login' first")
 		}
+
+		log := logger.GetLogger()
+		log.Info("Creating CA backup...")
 
 		client := api.NewClient()
 		response, err := client.CreateBackup()

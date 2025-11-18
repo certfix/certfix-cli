@@ -14,13 +14,14 @@ var syncCmd = &cobra.Command{
 	Short: "Synchronize certificates",
 	Long:  `Synchronize certificates with the Certificate Authority.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log := logger.GetLogger()
-		log.Info("Synchronizing certificates...")
-
 		// Check authentication
 		if !auth.IsAuthenticated() {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("not authenticated, please run 'certfix login' first")
 		}
+
+		log := logger.GetLogger()
+		log.Info("Synchronizing certificates...")
 
 		client := api.NewClient()
 		response, err := client.SyncCertificates()

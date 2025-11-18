@@ -29,9 +29,6 @@ var certCreateCmd = &cobra.Command{
 		keySize, _ := cmd.Flags().GetInt("key-size")
 		san, _ := cmd.Flags().GetString("san")
 
-		log := logger.GetLogger()
-		log.Infof("Creating %s certificate: %s", certType, commonName)
-
 		// Validate certificate type
 		if certType != "server" && certType != "client" {
 			return fmt.Errorf("invalid certificate type: %s (must be 'server' or 'client')", certType)
@@ -39,8 +36,12 @@ var certCreateCmd = &cobra.Command{
 
 		// Check authentication
 		if !auth.IsAuthenticated() {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("not authenticated, please run 'certfix login' first")
 		}
+
+		log := logger.GetLogger()
+		log.Infof("Creating %s certificate: %s", certType, commonName)
 
 		client := api.NewClient()
 		response, err := client.CreateCertificate(commonName, certType, description, days, keySize, san)
@@ -96,13 +97,14 @@ var certListCmd = &cobra.Command{
 	Args: cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		listType := args[0]
-		log := logger.GetLogger()
 
 		// Check authentication
 		if !auth.IsAuthenticated() {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("not authenticated, please run 'certfix login' first")
 		}
 
+		log := logger.GetLogger()
 		client := api.NewClient()
 		var response []map[string]interface{}
 		var err error
@@ -173,13 +175,13 @@ var certRevokeCmd = &cobra.Command{
 		cascade, _ := cmd.Flags().GetBool("cascade")
 		reason, _ := cmd.Flags().GetString("reason")
 
-		log := logger.GetLogger()
-
 		// Check authentication
 		if !auth.IsAuthenticated() {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("not authenticated, please run 'certfix login' first")
 		}
 
+		log := logger.GetLogger()
 		client := api.NewClient()
 		var err error
 

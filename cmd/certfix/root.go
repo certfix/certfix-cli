@@ -18,6 +18,9 @@ var rootCmd = &cobra.Command{
 	Short: "Certfix CLI - Manage your certificates and application configurations",
 	Long: `Certfix CLI is a command-line interface tool for managing certificates,
 application configurations, and infrastructure operations.`,
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Initialize logger
 		logger.InitLogger(verbose)

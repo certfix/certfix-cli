@@ -21,6 +21,12 @@ Set up your API endpoint URL and other essential settings.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.GetLogger()
 		
+		// Check if --show flag is set
+		show, _ := cmd.Flags().GetBool("show")
+		if show {
+			return showCurrentConfig()
+		}
+		
 		// Get flags
 		apiURL, _ := cmd.Flags().GetString("api-url")
 		timeout, _ := cmd.Flags().GetInt("timeout")
@@ -247,6 +253,7 @@ func showCurrentConfig() error {
 func init() {
 	rootCmd.AddCommand(configureCmd)
 
+	configureCmd.Flags().BoolP("show", "s", false, "Show current configuration")
 	configureCmd.Flags().StringP("api-url", "a", "", "API endpoint URL (e.g., https://api.certfix.io)")
 	configureCmd.Flags().IntP("timeout", "t", 0, "Request timeout in seconds")
 	configureCmd.Flags().IntP("retry-attempts", "r", 0, "Number of retry attempts for failed requests")

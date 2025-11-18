@@ -27,6 +27,7 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 		// Check if API endpoint is configured FIRST
 		endpoint := config.GetDefaultEndpoint()
 		if endpoint == "" || endpoint == "https://api.certfix.io" {
+			cmd.SilenceUsage = true
 			fmt.Println("⚠ No API endpoint configured.")
 			fmt.Println("Please run 'certfix configure' first to set up your API endpoint.")
 			return fmt.Errorf("API endpoint not configured")
@@ -46,9 +47,11 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 
 		// Validate inputs
 		if username == "" {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("username is required")
 		}
 		if password == "" {
+			cmd.SilenceUsage = true
 			return fmt.Errorf("password is required")
 		}
 
@@ -57,12 +60,14 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 		// Perform authentication (endpoint is now always from config)
 		token, err := auth.Login(username, password, "")
 		if err != nil {
-			log.WithError(err).Error("Login failed")
-			return fmt.Errorf("login failed: %w", err)
+			cmd.SilenceUsage = true
+			log.Debug("Login failed: ", err)
+			return fmt.Errorf("login failed: invalid credentials or connection error")
 		}
 
 		// Store the token
 		if err := auth.StoreToken(token); err != nil {
+			cmd.SilenceUsage = true
 			log.WithError(err).Error("Failed to store authentication token")
 			return fmt.Errorf("failed to store token: %w", err)
 		}

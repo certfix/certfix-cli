@@ -92,7 +92,7 @@ func (c *Client) DeleteInstance(id string) error {
 }
 
 // CreateCertificate creates a new certificate
-func (c *Client) CreateCertificate(commonName, certType, description string, days, keySize int, san string) (map[string]interface{}, error) {
+func (c *Client) CreateCertificate(commonName, certType, description string, days, keySize int, san, clientId string) (map[string]interface{}, error) {
 	token, err := auth.GetToken()
 	if err != nil {
 		return nil, err
@@ -102,6 +102,11 @@ func (c *Client) CreateCertificate(commonName, certType, description string, day
 	payload := map[string]interface{}{
 		"commonName": commonName,
 		"type":       certType,
+	}
+
+	// Add clientId for client certificates
+	if certType == "client" && clientId != "" {
+		payload["clientId"] = clientId
 	}
 
 	// Add optional fields only if provided

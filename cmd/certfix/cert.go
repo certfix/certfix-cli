@@ -28,11 +28,18 @@ var certCreateCmd = &cobra.Command{
 		days, _ := cmd.Flags().GetInt("days")
 		keySize, _ := cmd.Flags().GetInt("key-size")
 		san, _ := cmd.Flags().GetString("san")
+		clientId, _ := cmd.Flags().GetString("client-id")
 
 		// Validate certificate type
 		if certType != "server" && certType != "client" {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("invalid certificate type: %s (must be 'server' or 'client')", certType)
+		}
+
+		// Validate client-id is required for client certificates
+		if certType == "client" && clientId == "" {
+			cmd.SilenceUsage = true
+			return fmt.Errorf("--client-id is required for client certificates")
 		}
 
 		// Check authentication
@@ -45,7 +52,7 @@ var certCreateCmd = &cobra.Command{
 		log.Infof("Creating %s certificate: %s", certType, commonName)
 
 		client := api.NewClient()
-		response, err := client.CreateCertificate(commonName, certType, description, days, keySize, san)
+		response, err := client.CreateCertificate(commonName, certType, description, days, keySize, san, clientId)
 		if err != nil {
 			cmd.SilenceUsage = true
 			log.Debug("Failed to create certificate: ", err)
@@ -220,6 +227,7 @@ func init() {
 
 	// Flags for cert create command
 	certCreateCmd.Flags().StringP("type", "t", "server", "Certificate type: 'server' or 'client' (required)")
+	certCreateCmd.Flags().StringP("client-id", "c", "", "Client ID (required for client certificates)")
 	certCreateCmd.Flags().StringP("description", "d", "", "Certificate description (optional)")
 	certCreateCmd.Flags().IntP("days", "", 0, "Validity period in days (optional)")
 	certCreateCmd.Flags().IntP("key-size", "k", 0, "RSA key size in bits (optional)")

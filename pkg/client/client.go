@@ -47,6 +47,11 @@ func (c *HTTPClient) GetWithAuth(endpoint string, token string) (map[string]inte
 	return c.request("GET", endpoint, nil, token)
 }
 
+// PutWithAuth makes a PUT request with authentication
+func (c *HTTPClient) PutWithAuth(endpoint string, payload interface{}, token string) (map[string]interface{}, error) {
+	return c.request("PUT", endpoint, payload, token)
+}
+
 // DeleteWithAuth makes a DELETE request with authentication
 func (c *HTTPClient) DeleteWithAuth(endpoint string, token string) (map[string]interface{}, error) {
 	return c.request("DELETE", endpoint, nil, token)

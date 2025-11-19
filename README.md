@@ -4,7 +4,7 @@ A cross-platform command-line interface tool for managing SSL/TLS certificates a
 
 ## Features
 
-- 🔐 **Authentication**: Secure JWT-based authentication system
+- 🔐 **Authentication**: Secure JWT-based authentication with support for personal access tokens
 - ⚙️ **Configuration Management**: Flexible configuration with Viper
 - 📜 **Certificate Operations**: Create, list, and revoke SSL/TLS certificates (server and client)
 - 🔄 **Synchronization**: Sync certificates with the Certificate Authority
@@ -59,7 +59,7 @@ make build-all
 
 ### 1. Configure API Endpoint
 
-Set up your Certfix CLI with the API endpoint and preferences:
+Set up your Certfix CLI with the API endpoint and API token:
 
 **Interactive mode:**
 
@@ -70,13 +70,17 @@ certfix configure
 This will prompt you for:
 
 - API URL (default: https://api.certfix.io)
+- API Token (for accessing the backoffice API)
 - Timeout in seconds (default: 30)
 - Retry attempts (default: 3)
 
 **Non-interactive mode:**
 
 ```bash
-certfix configure --api-url https://api.certfix.io --timeout 60 --retry-attempts 3
+certfix configure set endpoint https://api.certfix.io
+certfix configure set api_token your-secure-api-token-here
+certfix configure set timeout 60
+certfix configure set retry_attempts 3
 ```
 
 **View current configuration:**
@@ -87,7 +91,9 @@ certfix configure
 
 ### 2. Login
 
-Authenticate with your Certfix account:
+Authenticate with your Certfix account using either username/password or personal access tokens.
+
+> **💡 Recommended**: Use [personal access tokens](PERSONAL_TOKEN_AUTH.md) for better security and easier token management.
 
 **Interactive mode (recommended):**
 
@@ -95,16 +101,24 @@ Authenticate with your Certfix account:
 certfix login
 ```
 
-This will securely prompt you for:
+This will prompt you to choose:
 
-- Username
-- Password (hidden input)
+1. Username and Password (traditional)
+2. Personal Access Token (recommended)
 
-**Non-interactive mode:**
+**Personal access token (command-line):**
+
+```bash
+certfix login --email your-email@example.com --token pat_abc123...
+```
+
+**Traditional username/password:**
 
 ```bash
 certfix login --username your-email@example.com --password your-password
 ```
+
+For detailed information about personal access tokens, see [PERSONAL_TOKEN_AUTH.md](PERSONAL_TOKEN_AUTH.md).
 
 ### 3. Create Certificates
 
@@ -188,7 +202,9 @@ certfix configure
 
 #### `certfix login`
 
-Authenticate with the Certfix API.
+Authenticate with the Certfix API using username/password or personal access tokens.
+
+> **💡 Recommended**: Use personal access tokens for CLI authentication. See [PERSONAL_TOKEN_AUTH.md](PERSONAL_TOKEN_AUTH.md) for setup instructions.
 
 **Interactive mode (recommended):**
 
@@ -196,28 +212,44 @@ Authenticate with the Certfix API.
 certfix login
 ```
 
-**Non-interactive mode:**
+This prompts you to choose:
+
+1. Username and Password (traditional)
+2. Personal Access Token (recommended for CLI)
+
+**Non-interactive mode with personal token:**
 
 ```bash
-certfix login [flags]
+certfix login --email admin@example.com --token pat_abc123xyz...
+```
+
+**Non-interactive mode with username/password:**
+
+```bash
+certfix login --username admin@example.com --password mypassword
 ```
 
 **Flags:**
 
-- `--username, -u <username>` - Username for authentication
+- `--email, -e <email>` - Email for personal token authentication
+- `--token, -t <token>` - Personal access token for authentication
+- `--username, -u <username>` - Username for password authentication
 - `--password, -p <password>` - Password for authentication
 
 **Examples:**
 
 ```bash
-# Interactive login (password hidden)
+# Interactive login (choose auth method)
 certfix login
 
-# Non-interactive login
-certfix login --username admin@example.com --password mypassword
+# Login with personal access token
+certfix login -e admin@example.com -t pat_1234567890abcdef
+
+# Traditional login with username/password
+certfix login -u admin@example.com -p mypassword
 ```
 
-**Note:** Requires API endpoint to be configured first via `certfix configure`.
+**Note:** Requires API endpoint and API token to be configured first via `certfix configure`.
 
 ---
 
@@ -445,6 +477,7 @@ Default: `~/.certfix/config.yaml`
 | Key              | Description               | Default                  |
 | ---------------- | ------------------------- | ------------------------ |
 | `endpoint`       | API endpoint URL          | `https://api.certfix.io` |
+| `api_token`      | API token for requests    | (none)                   |
 | `timeout`        | Request timeout (seconds) | `30`                     |
 | `retry_attempts` | Number of retry attempts  | `3`                      |
 
@@ -454,6 +487,7 @@ You can also use environment variables with the `CERTFIX_` prefix:
 
 ```bash
 export CERTFIX_ENDPOINT=https://api.certfix.io
+export CERTFIX_API_TOKEN=your-secure-api-token-here
 export CERTFIX_TIMEOUT=60
 ```
 
@@ -483,7 +517,9 @@ certfix
 │   ├── --timeout, -t     # Request timeout
 │   └── --retry-attempts, -r  # Retry attempts
 ├── login                  # Authenticate
-│   ├── --username, -u    # Username
+│   ├── --email, -e       # Email for token auth
+│   ├── --token, -t       # Personal access token
+│   ├── --username, -u    # Username for password auth
 │   └── --password, -p    # Password
 ├── logout                 # Remove auth token
 ├── backup                 # Create CA backup

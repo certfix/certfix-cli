@@ -103,3 +103,8 @@ func GetTimeout() int {
 func GetRetryAttempts() int {
 	return viper.GetInt("retry_attempts")
 }
+
+// GetAPIToken returns the configured API token
+func GetAPIToken() string {
+	return viper.GetString("api_token")
+}

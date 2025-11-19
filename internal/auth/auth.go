@@ -19,26 +19,26 @@ type TokenData struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-// Login authenticates the user and returns a JWT token
-func Login(username, password, endpoint string) (string, error) {
+// Login authenticates using a personal access token and returns a JWT token
+func Login(email, personalToken, endpoint string) (string, error) {
 	log := logger.GetLogger()
 
 	if endpoint == "" {
 		endpoint = config.GetDefaultEndpoint()
 	}
 
-	log.Debugf("Authenticating with endpoint: %s", endpoint)
+	log.Debugf("Authenticating with personal token at endpoint: %s", endpoint)
 
 	// Create API client
 	apiClient := client.NewHTTPClient(endpoint)
 
-	// Perform login request
+	// Perform CLI auth request
 	payload := map[string]string{
-		"username": username,
-		"password": password,
+		"email":                email,
+		"personal_access_token": personalToken,
 	}
 
-	response, err := apiClient.Post("/auth/login", payload)
+	response, err := apiClient.Post("/auth/cli", payload)
 	if err != nil {
 		return "", fmt.Errorf("authentication request failed: %w", err)
 	}

@@ -17,7 +17,7 @@ import (
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authenticate with Certfix services",
-	Long: `Login to Certfix services using your credentials.
+	Long: `Login to Certfix services using your email and personal access token.
 This will store an authentication token for subsequent commands.
 
 Run without flags for interactive mode, or provide credentials via flags.`,
@@ -33,36 +33,36 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 			return fmt.Errorf("API endpoint not configured")
 		}
 
-		username, _ := cmd.Flags().GetString("username")
-		password, _ := cmd.Flags().GetString("password")
+		email, _ := cmd.Flags().GetString("email")
+		personalToken, _ := cmd.Flags().GetString("token")
 
 		// Interactive mode if no flags provided
-		if !cmd.Flags().Changed("username") && !cmd.Flags().Changed("password") {
+		if !cmd.Flags().Changed("email") && !cmd.Flags().Changed("token") {
 			var err error
-			username, password, err = interactiveLogin()
+			email, personalToken, err = interactiveLogin()
 			if err != nil {
 				return err
 			}
 		}
 
 		// Validate inputs
-		if username == "" {
+		if email == "" {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("username is required")
+			return fmt.Errorf("email is required")
 		}
-		if password == "" {
+		if personalToken == "" {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("password is required")
+			return fmt.Errorf("personal access token is required")
 		}
 
-		log.Info("Attempting to login...")
+		log.Info("Attempting to login with personal access token...")
 
-		// Perform authentication (endpoint is now always from config)
-		token, err := auth.Login(username, password, "")
+		// Perform authentication
+		token, err := auth.Login(email, personalToken, "")
 		if err != nil {
 			cmd.SilenceUsage = true
 			log.Debug("Login failed: ", err)
-			return fmt.Errorf("login failed: invalid credentials or connection error")
+			return fmt.Errorf("login failed: invalid token or connection error")
 		}
 
 		// Store the token
@@ -82,30 +82,30 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 func interactiveLogin() (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	// Prompt for username
-	fmt.Print("Username: ")
-	username, err := reader.ReadString('\n')
+	// Prompt for email
+	fmt.Print("Email: ")
+	email, err := reader.ReadString('\n')
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read username: %w", err)
+		return "", "", fmt.Errorf("failed to read email: %w", err)
 	}
-	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
 
-	// Prompt for password (hidden input)
-	fmt.Print("Password: ")
-	passwordBytes, err := term.ReadPassword(int(syscall.Stdin))
+	// Prompt for personal access token (hidden input)
+	fmt.Print("Personal Access Token: ")
+	tokenBytes, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read password: %w", err)
+		return "", "", fmt.Errorf("failed to read token: %w", err)
 	}
-	fmt.Println() // Add newline after password input
+	fmt.Println() // Add newline after token input
 
-	password := strings.TrimSpace(string(passwordBytes))
+	token := strings.TrimSpace(string(tokenBytes))
 
-	return username, password, nil
+	return email, token, nil
 }
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
 
-	loginCmd.Flags().StringP("username", "u", "", "Username for authentication")
-	loginCmd.Flags().StringP("password", "p", "", "Password for authentication")
+	loginCmd.Flags().StringP("email", "e", "", "Email for authentication")
+	loginCmd.Flags().StringP("token", "t", "", "Personal access token for authentication")
 }

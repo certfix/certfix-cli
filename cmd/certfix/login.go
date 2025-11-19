@@ -26,10 +26,11 @@ Run without flags for interactive mode, or provide credentials via flags.`,
 
 		// Check if API endpoint is configured FIRST
 		endpoint := config.GetDefaultEndpoint()
-		if endpoint == "" || endpoint == "https://api.certfix.io" {
+		if endpoint == "" || endpoint == "https://certfix.io" {
 			cmd.SilenceUsage = true
 			fmt.Println("⚠ No API endpoint configured.")
 			fmt.Println("Please run 'certfix configure' first to set up your API endpoint.")
+			fmt.Println("Example: certfix configure set endpoint http://localhost:3001")
 			return fmt.Errorf("API endpoint not configured")
 		}
 

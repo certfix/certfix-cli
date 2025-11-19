@@ -37,7 +37,7 @@ func InitConfig(cfgFile string) {
 	viper.AutomaticEnv() // Read in environment variables that match
 
 	// Set defaults
-	viper.SetDefault("endpoint", "https://api.certfix.io")
+	viper.SetDefault("endpoint", "https://certfix.io")
 	viper.SetDefault("timeout", 30)
 	viper.SetDefault("retry_attempts", 3)
 
@@ -92,6 +92,19 @@ func List() (map[string]interface{}, error) {
 // GetDefaultEndpoint returns the default API endpoint
 func GetDefaultEndpoint() string {
 	return viper.GetString("endpoint")
+}
+
+// GetAPIEndpoint returns the API endpoint with /api appended
+func GetAPIEndpoint() string {
+	baseURL := viper.GetString("endpoint")
+	if baseURL == "" {
+		baseURL = "https://api.certfix.io"
+	}
+	// Remove trailing slash if present
+	if len(baseURL) > 0 && baseURL[len(baseURL)-1] == '/' {
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+	return baseURL + "/api"
 }
 
 // GetTimeout returns the configured timeout

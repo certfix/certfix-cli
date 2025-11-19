@@ -24,7 +24,7 @@ func Login(email, personalToken, endpoint string) (string, error) {
 	log := logger.GetLogger()
 
 	if endpoint == "" {
-		endpoint = config.GetDefaultEndpoint()
+		endpoint = config.GetAPIEndpoint()
 	}
 
 	log.Debugf("Authenticating with personal token at endpoint: %s", endpoint)

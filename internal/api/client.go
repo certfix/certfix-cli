@@ -16,7 +16,7 @@ type Client struct {
 
 // NewClient creates a new API client
 func NewClient() *Client {
-	endpoint := config.GetDefaultEndpoint()
+	endpoint := config.GetAPIEndpoint()
 	return &Client{
 		httpClient: client.NewHTTPClient(endpoint),
 	}

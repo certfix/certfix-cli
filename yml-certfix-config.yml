@@ -1,0 +1,125 @@
+# CertFix Configuration File
+# This file defines the complete configuration for CertFix resources
+# All resources will be created in the order: Eventos -> Políticas -> Service Groups -> Services
+
+# Eventos (Events)
+eventos:
+  - name: "Certificate Issued"
+    severity: "low"
+    enabled: true
+
+  - name: "Certificate Revoked"
+    severity: "high"
+    enabled: true
+
+  - name: "Key Rotation"
+    severity: "critical"
+    enabled: false
+
+# Políticas (Policies)
+politicas:
+  - name: "Standard Policy"
+    strategy: "Gradual"
+    enabled: true
+    cron_config:
+      minute: "0"
+      hour: "2"
+      day: "*"
+      month: "*"
+      weekday: "*"
+
+  - name: "Strict Policy"
+    strategy: "Janela de Manutenção"
+    enabled: true
+    cron_config:
+      minute: "0"
+      hour: "3"
+      day: "*"
+      month: "*"
+      weekday: "0" # Sundays only
+
+  - name: "Development Policy"
+    strategy: "Gradual"
+    enabled: false
+    cron_config:
+      minute: "0"
+      hour: "1"
+      day: "*"
+      month: "*"
+      weekday: "*"
+
+# Service Groups
+service_groups:
+  - name: "Production Services"
+    description: "Production environment services"
+    enabled: true
+
+  - name: "Staging Services"
+    description: "Staging environment services"
+    enabled: true
+
+  - name: "Development Services"
+    description: "Development environment services"
+    enabled: true
+
+# Services
+services:
+  - hash: "api-gateway-prod"
+    name: "API Gateway Production"
+    active: true
+    webhook_url: "https://api.example.com/webhook"
+    group_name: "Production Services"
+    policy_name: "Standard Policy"
+
+    # Service Keys (API Keys)
+    keys:
+      - name: "Production Key 1"
+        enabled: true
+        expiration_days: 365
+
+      - name: "Production Key 2"
+        enabled: true
+        expiration_days: 180
+
+    # Service Relations (Matrix)
+    relations:
+      - target_hash: "auth-service-prod"
+        type: "depends-on"
+
+      - target_hash: "database-service-prod"
+        type: "connects-to"
+
+  - hash: "auth-service-prod"
+    name: "Authentication Service"
+    active: true
+    webhook_url: "https://auth.example.com/webhook"
+    group_name: "Production Services"
+    policy_name: "Strict Policy"
+
+    keys:
+      - name: "Auth Service Key"
+        enabled: true
+        expiration_days: 365
+
+  - hash: "database-service-prod"
+    name: "Database Service"
+    active: true
+    group_name: "Production Services"
+    policy_name: "Standard Policy"
+
+    keys:
+      - name: "DB Service Key"
+        enabled: true
+        expiration_days: 730
+
+  - hash: "web-app-staging"
+    name: "Web Application Staging"
+    active: true
+    webhook_url: "https://staging.example.com/webhook"
+    group_name: "Staging Services"
+    policy_name: "Development Policy"
+
+    keys:
+      - name: "Staging Key"
+        enabled: true
+        expiration_days: 90

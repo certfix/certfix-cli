@@ -8,16 +8,15 @@ eventos:
     severity: "low"
     enabled: true
 
-  - name: "Certificate Revoked"
-    severity: "high"
-    enabled: true
-
-  - name: "Key Rotation"
-    severity: "critical"
-    enabled: false
-
 # Políticas (Policies)
 politicas:
+  - name: "Proactive Rotation Policy"
+    strategy: "Eventos"
+    enabled: true
+    event_config:
+      evento_id: "1" # Will be looked up by the API based on evento name
+      total_eventos: 3
+
   - name: "Standard Policy"
     strategy: "Gradual"
     enabled: true

@@ -225,12 +225,16 @@ var servicesGetCmd = &cobra.Command{
 var servicesCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new service",
-	Long:  `Create a new service with specified name, webhook URL, service group, and policy.`,
+	Long: `Create a new service with specified name, webhook URL, service group, and policy.
+
+You can optionally specify a custom hash using --hash. If provided, the hash must be unique
+and will be validated before creating the service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.GetLogger()
 
 		// Get flags
 		name, _ := cmd.Flags().GetString("name")
+		serviceHash, _ := cmd.Flags().GetString("hash")
 		webhookURL, _ := cmd.Flags().GetString("webhook")
 		groupID, _ := cmd.Flags().GetString("group")
 		policyID, _ := cmd.Flags().GetString("policy")
@@ -253,10 +257,27 @@ var servicesCreateCmd = &cobra.Command{
 		endpoint := config.GetAPIEndpoint()
 		apiClient := client.NewHTTPClient(endpoint)
 
+		// If hash is provided, check for duplicates
+		if serviceHash != "" {
+			log.Debugf("Checking if hash already exists: %s", serviceHash)
+			_, err := apiClient.GetWithAuth(fmt.Sprintf("/services/%s", serviceHash), token)
+			if err == nil {
+				// Service exists with this hash
+				cmd.SilenceUsage = true
+				return fmt.Errorf("service hash '%s' already exists. Please choose a different hash", serviceHash)
+			}
+			// If error is not found (404), we can proceed
+			log.Debugf("Hash is available: %s", serviceHash)
+		}
+
 		// Prepare payload
 		payload := map[string]interface{}{
 			"service_name": name,
 			"active":       active,
+		}
+
+		if serviceHash != "" {
+			payload["service_hash"] = serviceHash
 		}
 
 		if webhookURL != "" {
@@ -587,6 +608,7 @@ func init() {
 
 	// Create command flags
 	servicesCreateCmd.Flags().StringP("name", "n", "", "Name of the service (required)")
+	servicesCreateCmd.Flags().String("hash", "", "Custom service hash (optional, must be unique)")
 	servicesCreateCmd.Flags().StringP("webhook", "w", "", "Webhook URL for the service")
 	servicesCreateCmd.Flags().StringP("group", "g", "", "Service group ID")
 	servicesCreateCmd.Flags().StringP("policy", "p", "", "Policy ID")

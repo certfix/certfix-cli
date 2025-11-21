@@ -15,6 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Strategy mapping: display labels to enum values
+var strategyEnumMapping = map[string]string{
+	"Eventos":             "eventos",
+	"Gradual":             "gradual",
+	"Janela de Manutenção": "janela_manutencao",
+}
+
 var policyCmd = &cobra.Command{
 	Use:     "policy",
 	Aliases: []string{"policies", "politica", "politicas"},
@@ -193,7 +200,6 @@ var policyGetCmd = &cobra.Command{
 var policyCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new policy",
-	Long:  `Create a new policy with specified name, strategy, and configuration.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.GetLogger()
 
@@ -216,11 +222,11 @@ var policyCreateCmd = &cobra.Command{
 		// Validate required fields
 		if name == "" {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("name is required (use --name)")
+			return fmt.Errorf("name is required")
 		}
 		if strategy == "" {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("strategy is required (use --strategy)")
+			return fmt.Errorf("strategy is required")
 		}
 
 		// Validate strategy
@@ -237,6 +243,15 @@ var policyCreateCmd = &cobra.Command{
 			return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Janela de Manutenção, Eventos)", strategy)
 		}
 
+		// Map to enum value
+		var enumStrategy string
+		if enumStrat, exists := strategyEnumMapping[strategy]; exists {
+			enumStrategy = enumStrat
+		} else {
+			cmd.SilenceUsage = true
+			return fmt.Errorf("failed to map strategy to enum value")
+		}
+
 		// Get authentication token
 		token, err := auth.GetToken()
 		if err != nil {
@@ -251,7 +266,7 @@ var policyCreateCmd = &cobra.Command{
 		// Prepare payload
 		payload := map[string]interface{}{
 			"name":     name,
-			"strategy": strategy,
+			"strategy": enumStrategy,
 			"enabled":  enabled,
 		}
 
@@ -344,7 +359,13 @@ var policyUpdateCmd = &cobra.Command{
 				cmd.SilenceUsage = true
 				return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Janela de Manutenção, Eventos)", strategy)
 			}
-			payload["strategy"] = strategy
+			// Map to enum value
+			if enumStrat, exists := strategyEnumMapping[strategy]; exists {
+				payload["strategy"] = enumStrat
+			} else {
+				cmd.SilenceUsage = true
+				return fmt.Errorf("failed to map strategy to enum value")
+			}
 		}
 
 		if enabled {

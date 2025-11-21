@@ -11,14 +11,17 @@ eventos:
 # Políticas (Policies)
 politicas:
   - name: "Proactive Rotation Policy"
-    strategy: "Eventos"
+    strategy: "gradual"
     enabled: true
-    event_config:
-      evento_id: "1" # Will be looked up by the API based on evento name
-      total_eventos: 3
+    cron_config:
+      minute: "0"
+      hour: "2"
+      day: "*"
+      month: "*"
+      weekday: "*"
 
   - name: "Standard Policy"
-    strategy: "Gradual"
+    strategy: "gradual"
     enabled: true
     cron_config:
       minute: "0"
@@ -28,7 +31,7 @@ politicas:
       weekday: "*"
 
   - name: "Strict Policy"
-    strategy: "Janela de Manutenção"
+    strategy: "janela_manutencao"
     enabled: true
     cron_config:
       minute: "0"
@@ -38,7 +41,7 @@ politicas:
       weekday: "0" # Sundays only
 
   - name: "Development Policy"
-    strategy: "Gradual"
+    strategy: "gradual"
     enabled: false
     cron_config:
       minute: "0"

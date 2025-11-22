@@ -116,6 +116,14 @@ jobs:
 
           ### Installation:
 
+          **Automatic Installation (Linux):**
+          \`\`\`bash
+          # Auto-detect architecture and install
+          curl -fsSL https://raw.githubusercontent.com/certfix/certfix-cli/main/scripts/install.sh | sudo bash
+          \`\`\`
+
+          **Manual Installation:**
+
           **Linux:**
           \`\`\`bash
           # Download for your architecture

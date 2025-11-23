@@ -699,6 +699,6 @@ This project is proprietary software. All rights reserved.
 
 For support, please contact:
 
-- Email: support@certfix.io
+- Email: development@certfix.io
 - Documentation: https://docs.certfix.io
 - Issues: https://github.com/certfix/certfix-cli/issues

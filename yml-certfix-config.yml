@@ -1,15 +1,15 @@
 # CertFix Configuration File
 # This file defines the complete configuration for CertFix resources
-# All resources will be created in the order: Eventos -> Políticas -> Service Groups -> Services
+# All resources will be created in the order: Events -> Policies -> Service Groups -> Services
 
-# Eventos (Events)
-eventos:
+# Events
+events:
   - name: "Certificate Issued"
     severity: "low"
     enabled: true
 
-# Políticas (Policies)
-politicas:
+# Policies
+policies:
   - name: "Proactive Rotation Policy"
     strategy: "gradual"
     enabled: true

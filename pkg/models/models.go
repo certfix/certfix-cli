@@ -34,21 +34,21 @@ type AuthResponse struct {
 
 // CertfixConfig represents the complete YAML configuration file
 type CertfixConfig struct {
-	Eventos       []EventoConfig       `yaml:"eventos"`
-	Politicas     []PoliticaConfig     `yaml:"politicas"`
+	Events        []EventConfig        `yaml:"events"`
+	Policies      []PolicyConfig       `yaml:"policies"`
 	ServiceGroups []ServiceGroupConfig `yaml:"service_groups"`
 	Services      []ServiceConfig      `yaml:"services"`
 }
 
-// EventoConfig represents an event configuration
-type EventoConfig struct {
+// EventConfig represents an event configuration
+type EventConfig struct {
 	Name     string `yaml:"name"`
 	Severity string `yaml:"severity"`
 	Enabled  bool   `yaml:"enabled"`
 }
 
-// PoliticaConfig represents a policy configuration
-type PoliticaConfig struct {
+// PolicyConfig represents a policy configuration
+type PolicyConfig struct {
 	Name     string                 `yaml:"name"`
 	Strategy string                 `yaml:"strategy"`
 	Enabled  bool                   `yaml:"enabled"`

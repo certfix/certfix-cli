@@ -19,8 +19,8 @@ var applyCmd = &cobra.Command{
 	Long: `Apply a complete CertFix configuration from a YAML file.
 
 The configuration file can contain:
-- Eventos (Events)
-- Políticas (Policies)
+- Events
+- Policies
 - Service Groups
 - Services (with API keys and relations)
 
@@ -48,8 +48,8 @@ resources will be rolled back automatically.`,
 		}
 
 		fmt.Println("Configuration loaded successfully")
-		fmt.Printf("  - Eventos: %d\n", len(certfixConfig.Eventos))
-		fmt.Printf("  - Políticas: %d\n", len(certfixConfig.Politicas))
+		fmt.Printf("  - Events: %d\n", len(certfixConfig.Events))
+		fmt.Printf("  - Policies: %d\n", len(certfixConfig.Policies))
 		fmt.Printf("  - Service Groups: %d\n", len(certfixConfig.ServiceGroups))
 		fmt.Printf("  - Services: %d\n", len(certfixConfig.Services))
 
@@ -57,17 +57,17 @@ resources will be rolled back automatically.`,
 			fmt.Println("\n=== DRY RUN MODE - No changes will be made ===\n")
 			
 			// Show what would be created
-			if len(certfixConfig.Eventos) > 0 {
-				fmt.Println("Eventos to create:")
-				for _, e := range certfixConfig.Eventos {
+			if len(certfixConfig.Events) > 0 {
+				fmt.Println("Events to create:")
+				for _, e := range certfixConfig.Events {
 					fmt.Printf("  ✓ %s (severity: %s, enabled: %v)\n", e.Name, e.Severity, e.Enabled)
 				}
 				fmt.Println()
 			}
 			
-			if len(certfixConfig.Politicas) > 0 {
-				fmt.Println("Políticas to create:")
-				for _, p := range certfixConfig.Politicas {
+			if len(certfixConfig.Policies) > 0 {
+				fmt.Println("Policies to create:")
+				for _, p := range certfixConfig.Policies {
 					fmt.Printf("  ✓ %s (strategy: %s, enabled: %v)\n", p.Name, p.Strategy, p.Enabled)
 					if len(p.CronConfig) > 0 {
 						fmt.Printf("      Cron: %v\n", p.CronConfig)
@@ -120,7 +120,7 @@ resources will be rolled back automatically.`,
 				}
 			}
 			
-			total := len(certfixConfig.Eventos) + len(certfixConfig.Politicas) + len(certfixConfig.ServiceGroups) + len(certfixConfig.Services)
+			total := len(certfixConfig.Events) + len(certfixConfig.Policies) + len(certfixConfig.ServiceGroups) + len(certfixConfig.Services)
 			fmt.Printf("Total resources: %d\n", total)
 			return nil
 		}
@@ -166,23 +166,23 @@ resources will be rolled back automatically.`,
 func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClient, token string, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
 
-	// 1. Create Eventos
-	log.Infof("\n=== Creating Eventos ===")
-	for i, evento := range config.Eventos {
-		log.Infof("[%d/%d] Creating evento: %s", i+1, len(config.Eventos), evento.Name)
+	// 1. Create Events
+	log.Infof("\n=== Creating Events ===")
+	for i, event := range config.Events {
+		log.Infof("[%d/%d] Creating event: %s", i+1, len(config.Events), event.Name)
 		
-		if err := createEvento(apiClient, token, evento, createdResources, skipExisting); err != nil {
-			return fmt.Errorf("failed to create evento '%s': %w", evento.Name, err)
+		if err := createEvent(apiClient, token, event, createdResources, skipExisting); err != nil {
+			return fmt.Errorf("failed to create event '%s': %w", event.Name, err)
 		}
 	}
 
-	// 2. Create Políticas
-	log.Infof("\n=== Creating Políticas ===")
-	for i, politica := range config.Politicas {
-		log.Infof("[%d/%d] Creating política: %s", i+1, len(config.Politicas), politica.Name)
+	// 2. Create Policies
+	log.Infof("\n=== Creating Policies ===")
+	for i, policy := range config.Policies {
+		log.Infof("[%d/%d] Creating policy: %s", i+1, len(config.Policies), policy.Name)
 		
-		if err := createPolitica(apiClient, token, politica, createdResources, skipExisting); err != nil {
-			return fmt.Errorf("failed to create política '%s': %w", politica.Name, err)
+		if err := createPolicy(apiClient, token, policy, createdResources, skipExisting); err != nil {
+			return fmt.Errorf("failed to create policy '%s': %w", policy.Name, err)
 		}
 	}
 
@@ -241,15 +241,15 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	return nil
 }
 
-func createEvento(apiClient *client.HTTPClient, token string, evento models.EventoConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
+func createEvent(apiClient *client.HTTPClient, token string, event models.EventConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
 	
-	// Note: Skip existence check for now - eventos API doesn't support hash-based lookup
+	// Note: Skip existence check for now - events API doesn't support hash-based lookup
 	
 	payload := map[string]interface{}{
-		"name":     evento.Name,
-		"severity": evento.Severity,
-		"enabled":  evento.Enabled,
+		"name":     event.Name,
+		"severity": event.Severity,
+		"enabled":  event.Enabled,
 	}
 
 	_, err := apiClient.PostWithAuth("/eventos", payload, token)
@@ -258,33 +258,33 @@ func createEvento(apiClient *client.HTTPClient, token string, evento models.Even
 	}
 
 	*createdResources = append(*createdResources, models.CreatedResource{
-		Type: "evento",
-		Hash: evento.Name,
+		Type: "event",
+		Hash: event.Name,
 	})
 
 	log.Infof("  ✓ Created successfully")
 	return nil
 }
 
-func createPolitica(apiClient *client.HTTPClient, token string, politica models.PoliticaConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
+func createPolicy(apiClient *client.HTTPClient, token string, policy models.PolicyConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
 	
 	// Check if exists (skip for now, will check by list)
 	
 	payload := map[string]interface{}{
-		"name":     politica.Name,
-		"strategy": politica.Strategy,
-		"enabled":  politica.Enabled,
+		"name":     policy.Name,
+		"strategy": policy.Strategy,
+		"enabled":  policy.Enabled,
 	}
 	
 	// Add optional cron config
-	if len(politica.CronConfig) > 0 {
-		payload["cron_config"] = politica.CronConfig
+	if len(policy.CronConfig) > 0 {
+		payload["cron_config"] = policy.CronConfig
 	}
 	
 	// Add optional event config
-	if len(politica.EventConfig) > 0 {
-		payload["event_config"] = politica.EventConfig
+	if len(policy.EventConfig) > 0 {
+		payload["event_config"] = policy.EventConfig
 	}
 
 	_, err := apiClient.PostWithAuth("/politicas", payload, token)
@@ -293,8 +293,8 @@ func createPolitica(apiClient *client.HTTPClient, token string, politica models.
 	}
 
 	*createdResources = append(*createdResources, models.CreatedResource{
-		Type: "politica",
-		Hash: politica.Name,
+		Type: "policy",
+		Hash: policy.Name,
 	})
 
 	log.Infof("  ✓ Created successfully")

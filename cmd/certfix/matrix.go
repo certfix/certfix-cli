@@ -44,7 +44,7 @@ var matrixListCmd = &cobra.Command{
 		endpoint := config.GetAPIEndpoint()
 		apiClient := client.NewHTTPClient(endpoint)
 
-		apiEndpoint := fmt.Sprintf("/services/%s/matriz/relations", serviceHash)
+		apiEndpoint := fmt.Sprintf("/services/%s/matrix/relations", serviceHash)
 		log.Debugf("GET %s%s", endpoint, apiEndpoint)
 
 		// Make request
@@ -147,7 +147,7 @@ var matrixGetCmd = &cobra.Command{
 		apiClient := client.NewHTTPClient(endpoint)
 
 		// Make request
-		response, err := apiClient.GetWithAuth(fmt.Sprintf("/services/%s/matriz", serviceHash), token)
+		response, err := apiClient.GetWithAuth(fmt.Sprintf("/services/%s/matrix", serviceHash), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to get matrix data: %w", err)
@@ -162,31 +162,31 @@ var matrixGetCmd = &cobra.Command{
 
 		// Pretty print
 		fmt.Printf("Service: %v\n\n", response["service"])
-		
+
 		if relations, ok := response["relations"].([]interface{}); ok && len(relations) > 0 {
 			fmt.Println("Current Relations:")
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "  RELATION ID\tRELATED SERVICE\tSTATUS")
 			fmt.Fprintln(w, "  -----------\t---------------\t------")
-			
+
 			for _, item := range relations {
 				if rel, ok := item.(map[string]interface{}); ok {
 					relationID := fmt.Sprintf("%v", rel["relation_id"])
 					if len(relationID) > 12 {
 						relationID = relationID[:12] + "..."
 					}
-					
+
 					relatedName := "N/A"
 					if rel["related_service_name"] != nil && rel["related_service_name"] != "<nil>" {
 						relatedName = fmt.Sprintf("%v", rel["related_service_name"])
 					}
-					
+
 					enabled := rel["enabled"].(bool)
 					status := "Disabled"
 					if enabled {
 						status = "Enabled"
 					}
-					
+
 					fmt.Fprintf(w, "  %s\t%s\t%s\n", relationID, relatedName, status)
 				}
 			}
@@ -237,7 +237,7 @@ var matrixAddCmd = &cobra.Command{
 		log.Infof("Adding service relation: %s -> %s", sourceServiceHash, relatedServiceHash)
 
 		// Make request
-		response, err := apiClient.PostWithAuth(fmt.Sprintf("/services/%s/matriz", sourceServiceHash), payload, token)
+		response, err := apiClient.PostWithAuth(fmt.Sprintf("/services/%s/matrix", sourceServiceHash), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to add service relation: %w", err)
@@ -278,7 +278,7 @@ var matrixEnableCmd = &cobra.Command{
 
 		// Make request (toggle endpoint toggles the current state, so we need to check first)
 		// For simplicity, we'll just call toggle and inform the user
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matriz/relations/%s/toggle", serviceHash, relationID), nil, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matrix/relations/%s/toggle", serviceHash, relationID), nil, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to toggle service relation: %w", err)
@@ -310,7 +310,7 @@ var matrixDisableCmd = &cobra.Command{
 		apiClient := client.NewHTTPClient(endpoint)
 
 		// Make request (toggle endpoint toggles the current state)
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matriz/relations/%s/toggle", serviceHash, relationID), nil, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matrix/relations/%s/toggle", serviceHash, relationID), nil, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to toggle service relation: %w", err)
@@ -345,7 +345,7 @@ var matrixToggleCmd = &cobra.Command{
 		log.Infof("Toggling service relation: %s", relationID)
 
 		// Make PUT request
-		response, err := apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matriz/relations/%s/toggle", serviceHash, relationID), nil, token)
+		response, err := apiClient.PutWithAuth(fmt.Sprintf("/services/%s/matrix/relations/%s/toggle", serviceHash, relationID), nil, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to toggle service relation: %w", err)
@@ -401,7 +401,7 @@ var matrixDeleteCmd = &cobra.Command{
 		log.Infof("Deleting service relation: %s", relationID)
 
 		// Make request
-		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/services/%s/matriz/relations/%s", serviceHash, relationID), token)
+		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/services/%s/matrix/relations/%s", serviceHash, relationID), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to delete service relation: %w", err)

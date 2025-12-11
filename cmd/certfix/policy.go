@@ -56,11 +56,11 @@ var policyListCmd = &cobra.Command{
 		// Determine endpoint
 		var apiEndpoint string
 		if enabledOnly {
-			apiEndpoint = "/politicas/enabled"
+			apiEndpoint = "/policies/enabled"
 		} else if strategy != "" {
-			apiEndpoint = fmt.Sprintf("/politicas/strategy/%s", strategy)
+			apiEndpoint = fmt.Sprintf("/policies/strategy/%s", strategy)
 		} else {
-			apiEndpoint = "/politicas"
+			apiEndpoint = "/policies"
 		}
 
 		log.Debugf("GET %s%s", endpoint, apiEndpoint)
@@ -145,7 +145,7 @@ var policyGetCmd = &cobra.Command{
 		apiClient := client.NewHTTPClient(endpoint)
 
 		// Make request
-		response, err := apiClient.GetWithAuth(fmt.Sprintf("/politicas/%s", policyID), token)
+		response, err := apiClient.GetWithAuth(fmt.Sprintf("/policies/%s", policyID), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to get policy: %w", err)
@@ -292,7 +292,7 @@ var policyCreateCmd = &cobra.Command{
 		log.Infof("Creating policy: %s", name)
 
 		// Make request
-		response, err := apiClient.PostWithAuth("/politicas", payload, token)
+		response, err := apiClient.PostWithAuth("/policies", payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to create policy: %w", err)
@@ -414,7 +414,7 @@ var policyUpdateCmd = &cobra.Command{
 		log.Infof("Updating policy: %s", policyID)
 
 		// Make PUT request
-		response, err := apiClient.PutWithAuth(fmt.Sprintf("/politicas/%s", policyID), payload, token)
+		response, err := apiClient.PutWithAuth(fmt.Sprintf("/policies/%s", policyID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to update policy: %w", err)
@@ -458,7 +458,7 @@ var policyEnableCmd = &cobra.Command{
 		}
 
 		// Make request
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/politicas/%s", policyID), payload, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/policies/%s", policyID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to enable policy: %w", err)
@@ -493,7 +493,7 @@ var policyDisableCmd = &cobra.Command{
 		}
 
 		// Make request
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/politicas/%s", policyID), payload, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/policies/%s", policyID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to disable policy: %w", err)
@@ -539,7 +539,7 @@ var policyDeleteCmd = &cobra.Command{
 		log.Infof("Deleting policy: %s", policyID)
 
 		// Make request
-		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/politicas/%s", policyID), token)
+		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/policies/%s", policyID), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to delete policy: %w", err)

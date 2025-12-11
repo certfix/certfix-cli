@@ -287,7 +287,7 @@ func createPolicy(apiClient *client.HTTPClient, token string, policy models.Poli
 		payload["event_config"] = policy.EventConfig
 	}
 
-	_, err := apiClient.PostWithAuth("/politicas", payload, token)
+	_, err := apiClient.PostWithAuth("/policies", payload, token)
 	if err != nil {
 		return err
 	}
@@ -362,7 +362,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 
 	// Look up policy ID by name
 	if service.PolicyName != "" {
-		response, err := apiClient.GetWithAuth("/politicas", token)
+		response, err := apiClient.GetWithAuth("/policies", token)
 		if err != nil {
 			return fmt.Errorf("failed to get políticas: %w", err)
 		}
@@ -440,7 +440,7 @@ func createServiceRelation(apiClient *client.HTTPClient, token string, sourceHas
 		payload["relation_type"] = relation.Type
 	}
 
-	_, err := apiClient.PostWithAuth(fmt.Sprintf("/services/%s/matriz", sourceHash), payload, token)
+	_, err := apiClient.PostWithAuth(fmt.Sprintf("/services/%s/matrix", sourceHash), payload, token)
 	if err != nil {
 		return err
 	}
@@ -472,7 +472,7 @@ func rollbackResources(apiClient *client.HTTPClient, token string, resources []m
 		switch resource.Type {
 		case "relation":
 			log.Infof("  Deleting relation: %s -> %s", resource.Hash, resource.ID)
-			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/services/%s/matriz/%s", resource.Hash, resource.ID), token)
+			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/services/%s/matrix/%s", resource.Hash, resource.ID), token)
 			if err != nil {
 				log.Warnf("  ⚠ Failed to delete relation: %v", err)
 			} else {
@@ -508,7 +508,7 @@ func rollbackResources(apiClient *client.HTTPClient, token string, resources []m
 
 		case "politica":
 			log.Infof("  Deleting política: %s", resource.Hash)
-			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/policy/%s", resource.Hash), token)
+			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/policies/%s", resource.Hash), token)
 			if err != nil {
 				log.Warnf("  ⚠ Failed to delete política: %v", err)
 			} else {

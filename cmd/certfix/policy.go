@@ -17,9 +17,9 @@ import (
 
 // Strategy mapping: display labels to enum values
 var strategyEnumMapping = map[string]string{
-	"Eventos":             "eventos",
-	"Gradual":             "gradual",
-	"Janela de Manutenção": "janela_manutencao",
+	"Events":             "events",
+	"Gradual":            "gradual",
+	"Maintenance Window": "maintenance_window",
 }
 
 var policyCmd = &cobra.Command{
@@ -168,7 +168,7 @@ var policyGetCmd = &cobra.Command{
 			status = "Active"
 		}
 		fmt.Printf("Status:      %s\n", status)
-		
+
 		if response["cron_config"] != nil {
 			fmt.Println("Cron Config:")
 			cronConfig := response["cron_config"].(map[string]interface{})
@@ -178,14 +178,14 @@ var policyGetCmd = &cobra.Command{
 			fmt.Printf("  Month:     %v\n", cronConfig["month"])
 			fmt.Printf("  Weekday:   %v\n", cronConfig["weekday"])
 		}
-		
+
 		if response["event_config"] != nil {
 			fmt.Println("Event Config:")
 			eventConfig := response["event_config"].(map[string]interface{})
 			fmt.Printf("  Event ID:  %v\n", eventConfig["evento_id"])
 			fmt.Printf("  Total:     %v\n", eventConfig["total_eventos"])
 		}
-		
+
 		if response["created_at"] != nil {
 			fmt.Printf("Created At:  %v\n", response["created_at"])
 		}
@@ -230,7 +230,7 @@ var policyCreateCmd = &cobra.Command{
 		}
 
 		// Validate strategy
-		validStrategies := []string{"Gradual", "Janela de Manutenção", "Eventos"}
+		validStrategies := []string{"Gradual", "Maintenance Window", "Events"}
 		strategyValid := false
 		for _, v := range validStrategies {
 			if strategy == v {
@@ -240,7 +240,7 @@ var policyCreateCmd = &cobra.Command{
 		}
 		if !strategyValid {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Janela de Manutenção, Eventos)", strategy)
+			return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Maintenance Window, Events)", strategy)
 		}
 
 		// Map to enum value
@@ -347,7 +347,7 @@ var policyUpdateCmd = &cobra.Command{
 
 		if strategy != "" {
 			// Validate strategy
-			validStrategies := []string{"Gradual", "Janela de Manutenção", "Eventos"}
+			validStrategies := []string{"Gradual", "Maintenance Window", "Events"}
 			strategyValid := false
 			for _, v := range validStrategies {
 				if strategy == v {
@@ -357,7 +357,7 @@ var policyUpdateCmd = &cobra.Command{
 			}
 			if !strategyValid {
 				cmd.SilenceUsage = true
-				return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Janela de Manutenção, Eventos)", strategy)
+				return fmt.Errorf("invalid strategy: %s (must be one of: Gradual, Maintenance Window, Events)", strategy)
 			}
 			// Map to enum value
 			if enumStrat, exists := strategyEnumMapping[strategy]; exists {
@@ -563,7 +563,7 @@ func init() {
 	policyCmd.AddCommand(policyDeleteCmd)
 
 	// List command flags
-	policyListCmd.Flags().StringP("strategy", "s", "", "Filter by strategy (Gradual, Janela de Manutenção, Eventos)")
+	policyListCmd.Flags().StringP("strategy", "s", "", "Filter by strategy (Gradual, Maintenance Window, Events)")
 	policyListCmd.Flags().BoolP("enabled", "e", false, "Show only enabled policies")
 	policyListCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 
@@ -572,38 +572,38 @@ func init() {
 
 	// Create command flags
 	policyCreateCmd.Flags().StringP("name", "n", "", "Name of the policy (required)")
-	policyCreateCmd.Flags().StringP("strategy", "s", "", "Strategy: Gradual, Janela de Manutenção, or Eventos (required)")
+	policyCreateCmd.Flags().StringP("strategy", "s", "", "Strategy: Gradual, Maintenance Window, or Events (required)")
 	policyCreateCmd.Flags().BoolP("enabled", "e", true, "Enable the policy immediately (default: true)")
-	
-	// Cron configuration flags (for Gradual and Janela de Manutenção)
+
+	// Cron configuration flags (for Gradual and Maintenance Window)
 	policyCreateCmd.Flags().String("cron-minute", "*", "Cron minute (0-59 or *)")
 	policyCreateCmd.Flags().String("cron-hour", "*", "Cron hour (0-23 or *)")
 	policyCreateCmd.Flags().String("cron-day", "*", "Cron day (1-31 or *)")
 	policyCreateCmd.Flags().String("cron-month", "*", "Cron month (1-12 or *)")
 	policyCreateCmd.Flags().String("cron-weekday", "*", "Cron weekday (0-7 or *)")
-	
-	// Event configuration flags (for Eventos strategy)
-	policyCreateCmd.Flags().String("event-id", "", "Event ID for Eventos strategy")
-	policyCreateCmd.Flags().Int("event-total", 1, "Total events for Eventos strategy")
-	
+
+	// Event configuration flags (for Events strategy)
+	policyCreateCmd.Flags().String("event-id", "", "Event ID for Events strategy")
+	policyCreateCmd.Flags().Int("event-total", 1, "Total events for Events strategy")
+
 	policyCreateCmd.MarkFlagRequired("name")
 	policyCreateCmd.MarkFlagRequired("strategy")
 
 	// Update command flags
 	policyUpdateCmd.Flags().StringP("name", "n", "", "New name for the policy")
-	policyUpdateCmd.Flags().StringP("strategy", "s", "", "New strategy: Gradual, Janela de Manutenção, or Eventos")
+	policyUpdateCmd.Flags().StringP("strategy", "s", "", "New strategy: Gradual, Maintenance Window, or Events")
 	policyUpdateCmd.Flags().BoolP("enabled", "e", false, "Enable or disable the policy")
-	
+
 	// Cron configuration flags
 	policyUpdateCmd.Flags().String("cron-minute", "", "Cron minute (0-59 or *)")
 	policyUpdateCmd.Flags().String("cron-hour", "", "Cron hour (0-23 or *)")
 	policyUpdateCmd.Flags().String("cron-day", "", "Cron day (1-31 or *)")
 	policyUpdateCmd.Flags().String("cron-month", "", "Cron month (1-12 or *)")
 	policyUpdateCmd.Flags().String("cron-weekday", "", "Cron weekday (0-7 or *)")
-	
+
 	// Event configuration flags
-	policyUpdateCmd.Flags().String("event-id", "", "Event ID for Eventos strategy")
-	policyUpdateCmd.Flags().Int("event-total", 0, "Total events for Eventos strategy")
+	policyUpdateCmd.Flags().String("event-id", "", "Event ID for Events strategy")
+	policyUpdateCmd.Flags().Int("event-total", 0, "Total events for Events strategy")
 
 	// Delete command flags
 	policyDeleteCmd.Flags().BoolP("force", "f", false, "Force deletion without confirmation")

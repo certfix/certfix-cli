@@ -49,11 +49,11 @@ var eventosListCmd = &cobra.Command{
 		// Determine endpoint
 		var apiEndpoint string
 		if enabledOnly {
-			apiEndpoint = "/eventos/enabled"
+			apiEndpoint = "/events/enabled"
 		} else if severity != "" {
-			apiEndpoint = fmt.Sprintf("/eventos/severity/%s", severity)
+			apiEndpoint = fmt.Sprintf("/events/severity/%s", severity)
 		} else {
-			apiEndpoint = "/eventos"
+			apiEndpoint = "/events"
 		}
 
 		log.Debugf("GET %s%s", endpoint, apiEndpoint)
@@ -62,7 +62,7 @@ var eventosListCmd = &cobra.Command{
 		response, err := apiClient.GetWithAuth(apiEndpoint, token)
 		if err != nil {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("failed to list eventos: %w", err)
+			return fmt.Errorf("failed to list events: %w", err)
 		}
 
 		// Parse response
@@ -138,7 +138,7 @@ var eventosGetCmd = &cobra.Command{
 		apiClient := client.NewHTTPClient(endpoint)
 
 		// Make request
-		response, err := apiClient.GetWithAuth(fmt.Sprintf("/eventos/%s", eventoID), token)
+		response, err := apiClient.GetWithAuth(fmt.Sprintf("/events/%s", eventoID), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to get event: %w", err)
@@ -229,7 +229,7 @@ var eventosCreateCmd = &cobra.Command{
 		log.Infof("Creating event: %s", name)
 
 		// Make request
-		response, err := apiClient.PostWithAuth("/eventos", payload, token)
+		response, err := apiClient.PostWithAuth("/events", payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to create event: %w", err)
@@ -310,7 +310,7 @@ var eventosUpdateCmd = &cobra.Command{
 		log.Infof("Updating event: %s", eventoID)
 
 		// Make PUT request
-		response, err := apiClient.PutWithAuth(fmt.Sprintf("/eventos/%s", eventoID), payload, token)
+		response, err := apiClient.PutWithAuth(fmt.Sprintf("/events/%s", eventoID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to update event: %w", err)
@@ -354,7 +354,7 @@ var eventosEnableCmd = &cobra.Command{
 		}
 
 		// Make request
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/eventos/%s", eventoID), payload, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/events/%s", eventoID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to enable event: %w", err)
@@ -389,7 +389,7 @@ var eventosDisableCmd = &cobra.Command{
 		}
 
 		// Make request
-		_, err = apiClient.PutWithAuth(fmt.Sprintf("/eventos/%s", eventoID), payload, token)
+		_, err = apiClient.PutWithAuth(fmt.Sprintf("/events/%s", eventoID), payload, token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to disable event: %w", err)
@@ -435,7 +435,7 @@ var eventosDeleteCmd = &cobra.Command{
 		log.Infof("Deleting event: %s", eventoID)
 
 		// Make request
-		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/eventos/%s", eventoID), token)
+		_, err = apiClient.DeleteWithAuth(fmt.Sprintf("/events/%s", eventoID), token)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("failed to delete event: %w", err)

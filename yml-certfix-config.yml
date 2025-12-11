@@ -7,8 +7,11 @@ events:
   - name: "Certificate Issued"
     severity: "low"
     enabled: true
+  - name: "DDoS Running"
+    severity: "critical"
+    enabled: true
 
-# Policies
+# # Policies
 policies:
   - name: "Proactive Rotation Policy"
     strategy: "gradual"
@@ -31,7 +34,7 @@ policies:
       weekday: "*"
 
   - name: "Strict Policy"
-    strategy: "janela_manutencao"
+    strategy: "maintenance_window"
     enabled: true
     cron_config:
       minute: "0"
@@ -64,7 +67,7 @@ service_groups:
     description: "Development environment services"
     enabled: true
 
-# Services
+# # Services
 services:
   - hash: "api-gateway-prod"
     name: "API Gateway Production"

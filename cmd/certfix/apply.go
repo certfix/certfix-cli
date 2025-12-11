@@ -54,8 +54,8 @@ resources will be rolled back automatically.`,
 		fmt.Printf("  - Services: %d\n", len(certfixConfig.Services))
 
 		if dryRun {
-			fmt.Println("\n=== DRY RUN MODE - No changes will be made ===\n")
-			
+			fmt.Println("\n=== DRY RUN MODE - No changes will be made ===")
+
 			// Show what would be created
 			if len(certfixConfig.Events) > 0 {
 				fmt.Println("Events to create:")
@@ -64,7 +64,7 @@ resources will be rolled back automatically.`,
 				}
 				fmt.Println()
 			}
-			
+
 			if len(certfixConfig.Policies) > 0 {
 				fmt.Println("Policies to create:")
 				for _, p := range certfixConfig.Policies {
@@ -78,7 +78,7 @@ resources will be rolled back automatically.`,
 				}
 				fmt.Println()
 			}
-			
+
 			if len(certfixConfig.ServiceGroups) > 0 {
 				fmt.Println("Service Groups to create:")
 				for _, g := range certfixConfig.ServiceGroups {
@@ -90,7 +90,7 @@ resources will be rolled back automatically.`,
 				}
 				fmt.Println()
 			}
-			
+
 			if len(certfixConfig.Services) > 0 {
 				fmt.Println("Services to create:")
 				for _, s := range certfixConfig.Services {
@@ -119,7 +119,7 @@ resources will be rolled back automatically.`,
 					fmt.Println()
 				}
 			}
-			
+
 			total := len(certfixConfig.Events) + len(certfixConfig.Policies) + len(certfixConfig.ServiceGroups) + len(certfixConfig.Services)
 			fmt.Printf("Total resources: %d\n", total)
 			return nil
@@ -170,7 +170,7 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	log.Infof("\n=== Creating Events ===")
 	for i, event := range config.Events {
 		log.Infof("[%d/%d] Creating event: %s", i+1, len(config.Events), event.Name)
-		
+
 		if err := createEvent(apiClient, token, event, createdResources, skipExisting); err != nil {
 			return fmt.Errorf("failed to create event '%s': %w", event.Name, err)
 		}
@@ -180,7 +180,7 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	log.Infof("\n=== Creating Policies ===")
 	for i, policy := range config.Policies {
 		log.Infof("[%d/%d] Creating policy: %s", i+1, len(config.Policies), policy.Name)
-		
+
 		if err := createPolicy(apiClient, token, policy, createdResources, skipExisting); err != nil {
 			return fmt.Errorf("failed to create policy '%s': %w", policy.Name, err)
 		}
@@ -190,7 +190,7 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	log.Infof("\n=== Creating Service Groups ===")
 	for i, group := range config.ServiceGroups {
 		log.Infof("[%d/%d] Creating service group: %s", i+1, len(config.ServiceGroups), group.Name)
-		
+
 		if err := createServiceGroup(apiClient, token, group, createdResources, skipExisting); err != nil {
 			return fmt.Errorf("failed to create service group '%s': %w", group.Name, err)
 		}
@@ -200,7 +200,7 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	log.Infof("\n=== Creating Services ===")
 	for i, service := range config.Services {
 		log.Infof("[%d/%d] Creating service: %s (%s)", i+1, len(config.Services), service.Name, service.Hash)
-		
+
 		if err := createService(apiClient, token, service, createdResources, skipExisting); err != nil {
 			return fmt.Errorf("failed to create service '%s': %w", service.Hash, err)
 		}
@@ -211,10 +211,10 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	for _, service := range config.Services {
 		if len(service.Keys) > 0 {
 			log.Infof("Creating %d keys for service: %s", len(service.Keys), service.Hash)
-			
+
 			for i, key := range service.Keys {
 				log.Infof("  [%d/%d] Creating key: %s", i+1, len(service.Keys), key.Name)
-				
+
 				if err := createServiceKey(apiClient, token, service.Hash, key, createdResources); err != nil {
 					return fmt.Errorf("failed to create key '%s' for service '%s': %w", key.Name, service.Hash, err)
 				}
@@ -227,10 +227,10 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 	for _, service := range config.Services {
 		if len(service.Relations) > 0 {
 			log.Infof("Creating %d relations for service: %s", len(service.Relations), service.Hash)
-			
+
 			for i, relation := range service.Relations {
 				log.Infof("  [%d/%d] Creating relation: %s -> %s", i+1, len(service.Relations), service.Hash, relation.TargetHash)
-				
+
 				if err := createServiceRelation(apiClient, token, service.Hash, relation, createdResources); err != nil {
 					return fmt.Errorf("failed to create relation from '%s' to '%s': %w", service.Hash, relation.TargetHash, err)
 				}
@@ -243,16 +243,16 @@ func applyConfiguration(config *models.CertfixConfig, apiClient *client.HTTPClie
 
 func createEvent(apiClient *client.HTTPClient, token string, event models.EventConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
-	
+
 	// Note: Skip existence check for now - events API doesn't support hash-based lookup
-	
+
 	payload := map[string]interface{}{
 		"name":     event.Name,
 		"severity": event.Severity,
 		"enabled":  event.Enabled,
 	}
 
-	_, err := apiClient.PostWithAuth("/eventos", payload, token)
+	_, err := apiClient.PostWithAuth("/events", payload, token)
 	if err != nil {
 		return err
 	}
@@ -268,20 +268,20 @@ func createEvent(apiClient *client.HTTPClient, token string, event models.EventC
 
 func createPolicy(apiClient *client.HTTPClient, token string, policy models.PolicyConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
-	
+
 	// Check if exists (skip for now, will check by list)
-	
+
 	payload := map[string]interface{}{
 		"name":     policy.Name,
 		"strategy": policy.Strategy,
 		"enabled":  policy.Enabled,
 	}
-	
+
 	// Add optional cron config
 	if len(policy.CronConfig) > 0 {
 		payload["cron_config"] = policy.CronConfig
 	}
-	
+
 	// Add optional event config
 	if len(policy.EventConfig) > 0 {
 		payload["event_config"] = policy.EventConfig
@@ -303,7 +303,7 @@ func createPolicy(apiClient *client.HTTPClient, token string, policy models.Poli
 
 func createServiceGroup(apiClient *client.HTTPClient, token string, group models.ServiceGroupConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
-	
+
 	// Check if exists (skip for now, will check by list)
 
 	payload := map[string]interface{}{
@@ -328,7 +328,7 @@ func createServiceGroup(apiClient *client.HTTPClient, token string, group models
 
 func createService(apiClient *client.HTTPClient, token string, service models.ServiceConfig, createdResources *[]models.CreatedResource, skipExisting bool) error {
 	log := logger.GetLogger()
-	
+
 	// Check if exists
 	_, err := apiClient.GetWithAuth(fmt.Sprintf("/services/%s", service.Hash), token)
 	if err == nil {
@@ -348,7 +348,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 	if service.WebhookURL != "" {
 		payload["webhook_url"] = service.WebhookURL
 	}
-	
+
 	// Look up service group ID by name
 	if service.GroupName != "" {
 		response, err := apiClient.GetWithAuth(fmt.Sprintf("/service-groups/name/%s", service.GroupName), token)
@@ -359,7 +359,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 			payload["service_group_id"] = groupID
 		}
 	}
-	
+
 	// Look up policy ID by name
 	if service.PolicyName != "" {
 		response, err := apiClient.GetWithAuth("/politicas", token)
@@ -399,7 +399,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 
 func createServiceKey(apiClient *client.HTTPClient, token string, serviceHash string, key models.ServiceKeyConfig, createdResources *[]models.CreatedResource) error {
 	log := logger.GetLogger()
-	
+
 	payload := map[string]interface{}{
 		"key_name": key.Name,
 		"enabled":  key.Enabled,
@@ -431,7 +431,7 @@ func createServiceKey(apiClient *client.HTTPClient, token string, serviceHash st
 
 func createServiceRelation(apiClient *client.HTTPClient, token string, sourceHash string, relation models.ServiceRelationConfig, createdResources *[]models.CreatedResource) error {
 	log := logger.GetLogger()
-	
+
 	payload := map[string]interface{}{
 		"related_service_hash": relation.TargetHash,
 	}
@@ -457,7 +457,7 @@ func createServiceRelation(apiClient *client.HTTPClient, token string, sourceHas
 
 func rollbackResources(apiClient *client.HTTPClient, token string, resources []models.CreatedResource) {
 	log := logger.GetLogger()
-	
+
 	if len(resources) == 0 {
 		return
 	}
@@ -468,7 +468,7 @@ func rollbackResources(apiClient *client.HTTPClient, token string, resources []m
 	// Delete in reverse order
 	for i := len(resources) - 1; i >= 0; i-- {
 		resource := resources[i]
-		
+
 		switch resource.Type {
 		case "relation":
 			log.Infof("  Deleting relation: %s -> %s", resource.Hash, resource.ID)

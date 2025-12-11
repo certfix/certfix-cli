@@ -102,7 +102,7 @@ var policyListCmd = &cobra.Command{
 		fmt.Fprintln(w, "----\t----\t--------\t------\t----------")
 
 		for _, policy := range policies {
-			id := fmt.Sprintf("%v", policy["politica_id"])
+			id := fmt.Sprintf("%v", policy["policy_id"])
 			name := fmt.Sprintf("%v", policy["name"])
 			strategy := fmt.Sprintf("%v", policy["strategy"])
 			enabled := policy["enabled"].(bool)
@@ -159,7 +159,7 @@ var policyGetCmd = &cobra.Command{
 		}
 
 		// Pretty print
-		fmt.Printf("ID:          %v\n", response["politica_id"])
+		fmt.Printf("ID:          %v\n", response["policy_id"])
 		fmt.Printf("Name:        %v\n", response["name"])
 		fmt.Printf("Strategy:    %v\n", response["strategy"])
 		enabled := response["enabled"].(bool)
@@ -182,8 +182,8 @@ var policyGetCmd = &cobra.Command{
 		if response["event_config"] != nil {
 			fmt.Println("Event Config:")
 			eventConfig := response["event_config"].(map[string]interface{})
-			fmt.Printf("  Event ID:  %v\n", eventConfig["evento_id"])
-			fmt.Printf("  Total:     %v\n", eventConfig["total_eventos"])
+			fmt.Printf("  Event ID:  %v\n", eventConfig["event_id"])
+			fmt.Printf("  Total:     %v\n", eventConfig["total_events"])
 		}
 
 		if response["created_at"] != nil {
@@ -284,8 +284,8 @@ var policyCreateCmd = &cobra.Command{
 		// Add event config if provided (for Eventos strategy)
 		if eventID != "" {
 			payload["event_config"] = map[string]interface{}{
-				"evento_id":     eventID,
-				"total_eventos": eventTotal,
+				"event_id":     eventID,
+				"total_events": eventTotal,
 			}
 		}
 
@@ -299,7 +299,7 @@ var policyCreateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ Policy created successfully\n")
-		fmt.Printf("ID:       %v\n", response["politica_id"])
+		fmt.Printf("ID:       %v\n", response["policy_id"])
 		fmt.Printf("Name:     %v\n", response["name"])
 		fmt.Printf("Strategy: %v\n", response["strategy"])
 		enabledStatus := "Inactive"
@@ -387,10 +387,10 @@ var policyUpdateCmd = &cobra.Command{
 		if eventID != "" || eventTotal {
 			eventConfig := make(map[string]interface{})
 			if eventID != "" {
-				eventConfig["evento_id"] = eventID
+				eventConfig["event_id"] = eventID
 			}
 			if eventTotal {
-				eventConfig["total_eventos"] = eventTotalValue
+				eventConfig["total_events"] = eventTotalValue
 			}
 			payload["event_config"] = eventConfig
 		}
@@ -421,7 +421,7 @@ var policyUpdateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ Policy updated successfully\n")
-		fmt.Printf("ID:       %v\n", response["politica_id"])
+		fmt.Printf("ID:       %v\n", response["policy_id"])
 		fmt.Printf("Name:     %v\n", response["name"])
 		fmt.Printf("Strategy: %v\n", response["strategy"])
 		enabledStatus := "Inactive"

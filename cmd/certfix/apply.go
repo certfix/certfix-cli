@@ -364,7 +364,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 	if service.PolicyName != "" {
 		response, err := apiClient.GetWithAuth("/policies", token)
 		if err != nil {
-			return fmt.Errorf("failed to get políticas: %w", err)
+			return fmt.Errorf("failed to get policies: %w", err)
 		}
 		// Check if response is an array
 		if isArray, ok := response["_is_array"].(bool); ok && isArray {
@@ -372,8 +372,8 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 				for _, item := range arrayData {
 					if p, ok := item.(map[string]interface{}); ok {
 						if pName, ok := p["name"].(string); ok && pName == service.PolicyName {
-							if pID, ok := p["politica_id"].(string); ok {
-								payload["politica_id"] = pID
+							if pID, ok := p["policy_id"].(string); ok {
+								payload["policy_id"] = pID
 								break
 							}
 						}
@@ -506,20 +506,20 @@ func rollbackResources(apiClient *client.HTTPClient, token string, resources []m
 				log.Infof("  ✓ Deleted")
 			}
 
-		case "politica":
-			log.Infof("  Deleting política: %s", resource.Hash)
+		case "policy":
+			log.Infof("  Deleting policy: %s", resource.Hash)
 			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/policies/%s", resource.Hash), token)
 			if err != nil {
-				log.Warnf("  ⚠ Failed to delete política: %v", err)
+				log.Warnf("  ⚠ Failed to delete policy: %v", err)
 			} else {
 				log.Infof("  ✓ Deleted")
 			}
 
-		case "evento":
-			log.Infof("  Deleting evento: %s", resource.Hash)
-			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/eventos/%s", resource.Hash), token)
+		case "event":
+			log.Infof("  Deleting event: %s", resource.Hash)
+			_, err := apiClient.DeleteWithAuth(fmt.Sprintf("/events/%s", resource.Hash), token)
 			if err != nil {
-				log.Warnf("  ⚠ Failed to delete evento: %v", err)
+				log.Warnf("  ⚠ Failed to delete event: %v", err)
 			} else {
 				log.Infof("  ✓ Deleted")
 			}

@@ -49,10 +49,10 @@ type EventConfig struct {
 
 // PolicyConfig represents a policy configuration
 type PolicyConfig struct {
-	Name     string                 `yaml:"name"`
-	Strategy string                 `yaml:"strategy"`
-	Enabled  bool                   `yaml:"enabled"`
-	CronConfig map[string]string    `yaml:"cron_config,omitempty"`
+	Name        string                 `yaml:"name"`
+	Strategy    string                 `yaml:"strategy"`
+	Enabled     bool                   `yaml:"enabled"`
+	CronConfig  map[string]string      `yaml:"cron_config,omitempty"`
 	EventConfig map[string]interface{} `yaml:"event_config,omitempty"`
 }
 
@@ -65,14 +65,14 @@ type ServiceGroupConfig struct {
 
 // ServiceConfig represents a service configuration
 type ServiceConfig struct {
-	Hash        string                  `yaml:"hash"`
-	Name        string                  `yaml:"name"`
-	Active      bool                    `yaml:"active"`
-	WebhookURL  string                  `yaml:"webhook_url,omitempty"`
-	GroupName   string                  `yaml:"group_name,omitempty"`    // Reference by name
-	PolicyName  string                  `yaml:"policy_name,omitempty"`   // Reference by name
-	Keys        []ServiceKeyConfig      `yaml:"keys,omitempty"`
-	Relations   []ServiceRelationConfig `yaml:"relations,omitempty"`
+	Hash       string                  `yaml:"hash"`
+	Name       string                  `yaml:"name"`
+	Active     bool                    `yaml:"active"`
+	WebhookURL string                  `yaml:"webhook_url,omitempty"`
+	GroupName  string                  `yaml:"group_name,omitempty"`  // Reference by name
+	PolicyName string                  `yaml:"policy_name,omitempty"` // Reference by name
+	Keys       []ServiceKeyConfig      `yaml:"keys,omitempty"`
+	Relations  []ServiceRelationConfig `yaml:"relations,omitempty"`
 }
 
 // ServiceKeyConfig represents an API key configuration
@@ -90,7 +90,7 @@ type ServiceRelationConfig struct {
 
 // CreatedResource tracks resources created during apply for rollback
 type CreatedResource struct {
-	Type string // "evento", "politica", "service_group", "service", "key", "relation"
+	Type string // "event", "policy", "service_group", "service", "key", "relation"
 	Hash string // Primary identifier (hash or ID)
 	ID   string // Secondary identifier (for keys and relations)
 }

@@ -129,10 +129,7 @@ var servicesListCmd = &cobra.Command{
 		fmt.Fprintln(w, "----\t----\t-----\t------\t------\t----------")
 
 		for _, svc := range services {
-			hash := fmt.Sprintf("%v", svc["service_hash"])
-			if len(hash) > 12 {
-				hash = hash[:12] + "..."
-			}
+			   hash := fmt.Sprintf("%v", svc["service_hash"])
 			name := fmt.Sprintf("%v", svc["service_name"])
 			if len(name) > 30 {
 				name = name[:27] + "..."

@@ -1,6 +1,6 @@
 # Certfix CLI
 
-A cross-platform command-line interface tool for managing SSL/TLS certificates and Certificate Authority operations. Built with Go and designed to work seamlessly on Linux, macOS, and Windows.
+A cross-platform command-line interface tool for managing services, policies, events, and service configurations. Built with Go and designed to work seamlessly on Linux, macOS, and Windows.
 
 ## Installation
 
@@ -49,479 +49,73 @@ make build-all
 
 ### 1. Configure API Endpoint
 
-Set up your Certfix CLI with the API endpoint and API token:
-
-**Interactive mode:**
+Set up your Certfix CLI with the API endpoint:
 
 ```bash
 certfix configure
 ```
 
-This will prompt you for:
+This will interactively prompt you for:
 
-- API URL (default: http://api.certfix.io)
-- API Token (for accessing the backoffice API)
+- API URL (e.g., https://api.certfix.io)
 - Timeout in seconds (default: 30)
 - Retry attempts (default: 3)
 
-**Non-interactive mode:**
+Or configure non-interactively:
 
 ```bash
-certfix configure set endpoint https://api.certfix.io
-certfix configure set api_token your-secure-api-token-here
-certfix configure set timeout 60
-certfix configure set retry_attempts 3
-```
-
-**View current configuration:**
-
-```bash
-certfix configure
+certfix configure --api-url https://api.certfix.io
 ```
 
 ### 2. Login
 
-Authenticate with your Certfix account using personal access tokens.
-
-**Interactive mode (recommended):**
+Authenticate with your email and personal access token:
 
 ```bash
 certfix login
 ```
 
-This will prompt you to choose:
-
-1. Username
-2. Personal Access Token
-
-**Personal access token (command-line):**
+Or provide credentials directly:
 
 ```bash
-certfix login --email your-email@example.com --token pat_abc123...
+certfix login --email your-email@example.com --token your-personal-access-token
 ```
 
-### 3. Create Certificates
+### 3. Start Managing Resources
 
-Create server or client certificates:
+Now you can manage your infrastructure:
 
 ```bash
-# Create a server certificate
-certfix cert create webapp-prod --type server --days 365
+# List all services
+certfix services list
 
-# Create a client certificate
-certfix cert create client-app --type client --days 90
+# List all policies
+certfix policy list
+
+# List all events
+certfix events list
+
+# Create a new service
+certfix services create --name "my-api-service"
+
+# Apply configuration from YAML
+certfix apply config.yml
 ```
 
-### 4. Manage Certificates
+## Documentation
 
-List and manage your certificates:
+For complete command reference, usage examples, and detailed documentation, see:
 
-```bash
-# List valid certificates
-certfix cert list valid
+📚 **[Complete CLI Reference](DOCS/CLI_REFERENCE.md)**
 
-# List revoked certificates
-certfix cert list revoked
+The CLI Reference includes:
 
-# List expiring certificates (next 30 days)
-certfix cert list expiring 30
-```
-
-### 5. Synchronize & Backup
-
-```bash
-# Sync certificates with CA
-certfix sync
-
-# Create a backup
-certfix backup
-```
-
-## Usage
-
-### Configuration Commands
-
-#### `certfix configure`
-
-Configure the CLI with API endpoint and settings.
-
-**Interactive mode:**
-
-```bash
-certfix configure
-```
-
-**Non-interactive mode:**
-
-```bash
-certfix configure [flags]
-```
-
-**Flags:**
-
-- `--api-url, -a <url>` - API endpoint URL (e.g., https://api.certfix.io)
-- `--timeout, -t <seconds>` - Request timeout in seconds
-- `--retry-attempts, -r <count>` - Number of retry attempts for failed requests
-
-**Examples:**
-
-```bash
-# Configure with all options
-certfix configure --api-url https://api.certfix.io --timeout 60 --retry-attempts 5
-
-# Configure only API URL
-certfix configure -a https://staging.certfix.io
-
-# View current configuration (run without flags)
-certfix configure
-```
-
----
-
-### Authentication Commands
-
-#### `certfix login`
-
-Authenticate with the Certfix API using username/password or personal access tokens.
-
-> **💡 Recommended**: Use personal access tokens for CLI authentication. See [PERSONAL_TOKEN_AUTH.md](PERSONAL_TOKEN_AUTH.md) for setup instructions.
-
-**Interactive mode (recommended):**
-
-```bash
-certfix login
-```
-
-This prompts you to choose:
-
-1. Username and Password (traditional)
-2. Personal Access Token (recommended for CLI)
-
-**Non-interactive mode with personal token:**
-
-```bash
-certfix login --email admin@example.com --token pat_abc123xyz...
-```
-
-**Non-interactive mode with username/password:**
-
-```bash
-certfix login --username admin@example.com --password mypassword
-```
-
-**Flags:**
-
-- `--email, -e <email>` - Email for personal token authentication
-- `--token, -t <token>` - Personal access token for authentication
-- `--username, -u <username>` - Username for password authentication
-- `--password, -p <password>` - Password for authentication
-
-**Examples:**
-
-```bash
-# Interactive login (choose auth method)
-certfix login
-
-# Login with personal access token
-certfix login -e admin@example.com -t pat_1234567890abcdef
-
-# Traditional login with username/password
-certfix login -u admin@example.com -p mypassword
-```
-
-**Note:** Requires API endpoint and API token to be configured first via `certfix configure`.
-
----
-
-#### `certfix logout`
-
-Remove stored authentication token.
-
-```bash
-certfix logout
-```
-
----
-
-### Certificate Commands
-
-#### `certfix cert create`
-
-Create a new SSL/TLS certificate (server or client).
-
-```bash
-certfix cert create <common-name> [flags]
-```
-
-**Required Flags:**
-
-- `--type, -t <type>` - Certificate type: `server` or `client`
-
-**Optional Flags:**
-
-- `--description, -d <text>` - Certificate description
-- `--days <number>` - Validity period in days
-- `--key-size, -k <bits>` - RSA key size in bits (e.g., 2048, 4096)
-- `--san, -s <names>` - Subject Alternative Names (format: `DNS:example.com,IP:192.168.1.1`)
-
-**Examples:**
-
-```bash
-# Create server certificate (minimal)
-certfix cert create webapp-prod --type server
-
-# Create server certificate with all options
-certfix cert create webapp-prod \
-  --type server \
-  --description "Production Web Server" \
-  --days 365 \
-  --key-size 2048 \
-  --san "DNS:webapp.local,DNS:webapp.example.com,IP:192.168.1.100"
-
-# Create client certificate
-certfix cert create mobile-app-client \
-  --type client \
-  --description "Mobile app client certificate" \
-  --days 90
-```
-
-**Output:**
-
-```
-✓ Certificate created successfully
-Unique ID:     20251116-225759-c28b
-Serial Number: 1001
-App Name:      webapp-prod
-```
-
----
-
-#### `certfix cert list`
-
-List certificates by status.
-
-```bash
-certfix cert list <type> [days]
-```
-
-**Types:**
-
-- `valid` - List all valid certificates
-- `revoked` - List all revoked certificates
-- `expiring <days>` - List certificates expiring in specified days
-
-**Examples:**
-
-```bash
-# List valid certificates
-certfix cert list valid
-
-# List revoked certificates
-certfix cert list revoked
-
-# List certificates expiring in next 30 days
-certfix cert list expiring 30
-
-# List certificates expiring in next 7 days
-certfix cert list expiring 7
-```
-
-**Output (JSON):**
-
-```json
-[
-  {
-    "app_name": "webapp-prod",
-    "unique_id": "20251116-225759-c28b",
-    "client_id": "N/A",
-    "certificate_type": "server",
-    "expiration_date": "2026-11-16 22:57:59",
-    "status": "valid",
-    "revocation_date": null
-  }
-]
-```
-
----
-
-#### `certfix cert revoke`
-
-Revoke a certificate or all certificates.
-
-```bash
-certfix cert revoke <unique-id|all> [flags]
-```
-
-**Flags:**
-
-- `--cascade, -c` - Cascade revocation (default: true)
-- `--reason, -r <reason>` - Revocation reason (default: superseded)
-
-**Examples:**
-
-```bash
-# Revoke specific certificate (default options)
-certfix cert revoke 20251116-225759-c28b
-
-# Revoke with custom options
-certfix cert revoke 20251116-225759-c28b --cascade=false --reason="keyCompromise"
-
-# Revoke all certificates
-certfix cert revoke all
-
-# Revoke all with custom reason
-certfix cert revoke all --reason="unspecified"
-```
-
-**Output:**
-
-```
-✓ Certificate '20251116-225759-c28b' revoked successfully
-```
-
----
-
-### Utility Commands
-
-#### `certfix sync`
-
-Synchronize certificates with the Certificate Authority.
-
-```bash
-certfix sync
-```
-
-**Output:**
-
-```
-✓ Synchronization successful
-Synced: 3 certificates
-```
-
----
-
-#### `certfix backup`
-
-Create a backup of the Certificate Authority.
-
-```bash
-certfix backup
-```
-
-**Output:**
-
-```
-Backup status: success
-```
-
----
-
-#### `certfix version`
-
-Display the CLI version.
-
-```bash
-certfix version
-```
-
-**Output:**
-
-```
-Certfix CLI v1.0.0
-```
-
-## Global Flags
-
-Available for all commands:
-
-- `--config <path>` - Specify a custom config file (default: `~/.certfix/config.yaml`)
-- `--verbose, -v` - Enable verbose output for debugging
-
-**Example:**
-
-```bash
-certfix --verbose cert list valid
-certfix --config /custom/path/config.yaml login
-```
-
----
-
-## Configuration Files
-
-### Config File Location
-
-Default: `~/.certfix/config.yaml`
-
-### Configuration Options
-
-| Key              | Description               | Default                  |
-| ---------------- | ------------------------- | ------------------------ |
-| `endpoint`       | API endpoint URL          | `https://api.certfix.io` |
-| `api_token`      | API token for requests    | (none)                   |
-| `timeout`        | Request timeout (seconds) | `30`                     |
-| `retry_attempts` | Number of retry attempts  | `3`                      |
-
-### Environment Variables
-
-You can also use environment variables with the `CERTFIX_` prefix:
-
-```bash
-export CERTFIX_ENDPOINT=https://api.certfix.io
-export CERTFIX_API_TOKEN=your-secure-api-token-here
-export CERTFIX_TIMEOUT=60
-```
-
-### Token Storage
-
-Authentication tokens are stored in `~/.certfix/token.json` with restricted permissions (0600).
-
-**Example token file:**
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_at": "2025-11-17T10:30:00Z"
-}
-```
-
----
-
-## Command Reference
-
-### Complete Command Tree
-
-```
-certfix
-├── configure              # Configure API settings
-│   ├── --api-url, -a     # API endpoint URL
-│   ├── --timeout, -t     # Request timeout
-│   └── --retry-attempts, -r  # Retry attempts
-├── login                  # Authenticate
-│   ├── --email, -e       # Email for token auth
-│   ├── --token, -t       # Personal access token
-│   ├── --username, -u    # Username for password auth
-│   └── --password, -p    # Password
-├── logout                 # Remove auth token
-├── backup                 # Create CA backup
-├── sync                   # Sync certificates
-├── cert                   # Certificate management
-│   ├── create <name>     # Create certificate
-│   │   ├── --type, -t    # server or client (required)
-│   │   ├── --description, -d  # Description
-│   │   ├── --days        # Validity days
-│   │   ├── --key-size, -k  # RSA key size
-│   │   └── --san, -s     # Subject Alternative Names
-│   ├── list <type>       # List certificates
-│   │   ├── valid         # List valid certs
-│   │   ├── revoked       # List revoked certs
-│   │   └── expiring <days>  # List expiring certs
-│   └── revoke <id|all>   # Revoke certificate
-│       ├── --cascade, -c # Cascade revocation
-│       └── --reason, -r  # Revocation reason
-└── version                # Show version
-```
-
----
+- All available commands and subcommands
+- Detailed flag descriptions
+- Usage examples for every command
+- Configuration file format
+- YAML configuration structure for `apply` command
+- Troubleshooting guide
 
 ## Architecture
 
@@ -590,37 +184,6 @@ go run main.go version
 ./bin/certfix version
 ```
 
-### Testing Locally
-
-```bash
-# Build and test
-make build
-./bin/certfix configure --api-url https://localhost:8080
-
-# Or use go run for quick testing
-go run main.go configure
-
-# Check configuration
-cat ~/.certfix/config.yaml
-```
-
-### Testing in Docker
-
-```bash
-# Build for Linux
-make build-linux
-
-# Test in Ubuntu container
-docker run -it --rm \
-  -v $(pwd)/dist/certfix-linux-amd64:/usr/local/bin/certfix \
-  ubuntu:latest certfix configure --api-url https://api.example.com
-
-# Interactive testing
-docker run -it --rm \
-  -v $(pwd)/dist/certfix-linux-amd64:/usr/local/bin/certfix \
-  ubuntu:latest /bin/bash
-```
-
 ---
 
 ## Security
@@ -647,7 +210,7 @@ certfix login
 
 ```bash
 # View current configuration
-certfix configure
+certfix configure --show
 
 # Reset configuration
 rm ~/.certfix/config.yaml

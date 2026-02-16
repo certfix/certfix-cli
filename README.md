@@ -2,16 +2,6 @@
 
 A cross-platform command-line interface tool for managing SSL/TLS certificates and Certificate Authority operations. Built with Go and designed to work seamlessly on Linux, macOS, and Windows.
 
-## Features
-
-- 🔐 **Authentication**: Secure JWT-based authentication with support for personal access tokens
-- ⚙️ **Configuration Management**: Flexible configuration with Viper
-- 📜 **Certificate Operations**: Create, list, and revoke SSL/TLS certificates (server and client)
-- 🔄 **Synchronization**: Sync certificates with the Certificate Authority
-- 💾 **Backup**: Create CA backups
-- 📝 **Structured Logging**: Comprehensive logging with Logrus
-- 🌍 **Cross-Platform**: Compiled binaries for Linux, macOS, and Windows
-
 ## Installation
 
 ### From Release Binary
@@ -35,7 +25,7 @@ chmod +x certfix-darwin-arm64
 sudo mv certfix-darwin-arm64 /usr/local/bin/certfix
 
 # Windows
-# Download certfix-windows-amd64.exe and add to PATH
+Download certfix-windows-amd64.exe and add to PATH
 ```
 
 ### Building from Source
@@ -69,7 +59,7 @@ certfix configure
 
 This will prompt you for:
 
-- API URL (default: https://api.certfix.io)
+- API URL (default: http://api.certfix.io)
 - API Token (for accessing the backoffice API)
 - Timeout in seconds (default: 30)
 - Retry attempts (default: 3)
@@ -91,9 +81,7 @@ certfix configure
 
 ### 2. Login
 
-Authenticate with your Certfix account using either username/password or personal access tokens.
-
-> **💡 Recommended**: Use [personal access tokens](PERSONAL_TOKEN_AUTH.md) for better security and easier token management.
+Authenticate with your Certfix account using personal access tokens.
 
 **Interactive mode (recommended):**
 
@@ -103,22 +91,14 @@ certfix login
 
 This will prompt you to choose:
 
-1. Username and Password (traditional)
-2. Personal Access Token (recommended)
+1. Username
+2. Personal Access Token
 
 **Personal access token (command-line):**
 
 ```bash
 certfix login --email your-email@example.com --token pat_abc123...
 ```
-
-**Traditional username/password:**
-
-```bash
-certfix login --username your-email@example.com --password your-password
-```
-
-For detailed information about personal access tokens, see [PERSONAL_TOKEN_AUTH.md](PERSONAL_TOKEN_AUTH.md).
 
 ### 3. Create Certificates
 

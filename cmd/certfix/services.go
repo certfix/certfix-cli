@@ -15,6 +15,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var servicesRotateCmd = &cobra.Command{
+	Use:   "rotate <service-hash[,service-hash,...]>",
+	Short: "Rotate certificate(s) for one or more services",
+	Long:  `Rotate the certificate for one or more services by hash. Example: certfix service rotate id1,id2,id3`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		hashes := strings.Split(args[0], ",")
+		token, err := auth.GetToken()
+		if err != nil {
+			cmd.SilenceUsage = true
+			return err
+		}
+		endpoint := config.GetAPIEndpoint()
+		apiClient := client.NewHTTPClient(endpoint)
+		var failed []string
+		for _, hash := range hashes {
+			hash = strings.TrimSpace(hash)
+			if hash == "" { continue }
+			fmt.Printf("Rotating certificate for service: %s... ", hash)
+			_, err := apiClient.PostWithAuth("/services/"+hash+"/certificates/rotate", map[string]interface{}{}, token)
+			if err != nil {
+				fmt.Printf("Failed: %v\n", err)
+				failed = append(failed, hash)
+			} else {
+				fmt.Printf("OK\n")
+			}
+		}
+		if len(failed) > 0 {
+			return fmt.Errorf("Failed to rotate for: %s", strings.Join(failed, ", "))
+		}
+		return nil
+	},
+}
+
 var servicesCmd = &cobra.Command{
 	Use:     "services",
 	Aliases: []string{"service", "svc"},
@@ -597,6 +631,9 @@ func init() {
 	servicesCmd.AddCommand(servicesDeactivateCmd)
 	servicesCmd.AddCommand(servicesDeleteCmd)
 	servicesCmd.AddCommand(servicesGenerateHashCmd)
+
+		// Add rotate command
+		servicesCmd.AddCommand(servicesRotateCmd)
 
 	// List command flags
 	servicesListCmd.Flags().BoolP("active", "a", false, "Show only active services")

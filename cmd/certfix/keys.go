@@ -85,9 +85,6 @@ var keysListCmd = &cobra.Command{
 
 		for _, key := range keys {
 			keyID := fmt.Sprintf("%v", key["key_id"])
-			if len(keyID) > 12 {
-				keyID = keyID[:12] + "..."
-			}
 
 			keyName := fmt.Sprintf("%v", key["key_name"])
 			if len(keyName) > 20 {
@@ -179,9 +176,6 @@ var keysGetCmd = &cobra.Command{
 			for _, item := range keys {
 				if key, ok := item.(map[string]interface{}); ok {
 					keyID := fmt.Sprintf("%v", key["key_id"])
-					if len(keyID) > 12 {
-						keyID = keyID[:12] + "..."
-					}
 
 					keyName := fmt.Sprintf("%v", key["key_name"])
 

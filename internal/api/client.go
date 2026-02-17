@@ -80,6 +80,51 @@ func (c *Client) ListInstances() ([]*models.Instance, error) {
 	return instances, nil
 }
 
+// ListInstancesByKey lists all instances for a specific key
+func (c *Client) ListInstancesByKey(keyId string) ([]map[string]interface{}, error) {
+	token, err := auth.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the correct endpoint as found in server routes: /keys/:keyId/instances
+	// This endpoint is mounted at root /keys/:keyId/instances in backofficeApp.js
+	// Wait, backofficeApp.js says:
+	// app.use(
+	//     '/keys/:keyId/instances',
+	//     require('./controllers/serviceInstanceController').getInstancesByKey
+	// );
+	// So distinct from /instances or /services
+	// Let's verify the full path. backofficeApp.js is mounted at /api via app.js
+	// So it should be /api/keys/:keyId/instances relative to base URL?
+	// Client base URL usually includes /api or is configured to root.
+	// Looking at other methods: "/instances", "/certificates", etc.
+	// If client config URL ends with /api, then we just need /keys/...
+	response, err := c.httpClient.GetWithAuth(fmt.Sprintf("/keys/%s/instances", keyId), token)
+	if err != nil {
+		return nil, err
+	}
+
+	// The controller returns res.json(instances) which is an array
+	if items, ok := response["_array_data"].([]interface{}); ok {
+		return convertToMapArray(items), nil
+	}
+
+	// Fallback if it returns wrapped object (though controller suggests direct array)
+	// The HTTPClient wrapper likely handles basic JSON parsing.
+	// If the response is a direct array, existing client might wrap it in _array_data or similar?
+	// Let's look at ListValidCertificates implementation in this file for pattern.
+	// It checks _is_array.
+
+	if response["_is_array"] != nil {
+		if arr, ok := response["_array_data"].([]interface{}); ok {
+			return convertToMapArray(arr), nil
+		}
+	}
+
+	return []map[string]interface{}{}, nil
+}
+
 // DeleteInstance deletes an instance
 func (c *Client) DeleteInstance(id string) error {
 	token, err := auth.GetToken()
@@ -147,7 +192,7 @@ func (c *Client) ListValidCertificates() ([]map[string]interface{}, error) {
 	if certs, ok := response["certificates"].([]interface{}); ok {
 		return convertToMapArray(certs), nil
 	}
-	
+
 	// If response has an "array" marker indicating direct array response
 	if response["_is_array"] != nil {
 		if arr, ok := response["_array_data"].([]interface{}); ok {
@@ -174,7 +219,7 @@ func (c *Client) ListRevokedCertificates() ([]map[string]interface{}, error) {
 	if certs, ok := response["certificates"].([]interface{}); ok {
 		return convertToMapArray(certs), nil
 	}
-	
+
 	// If response has an "array" marker indicating direct array response
 	if response["_is_array"] != nil {
 		if arr, ok := response["_array_data"].([]interface{}); ok {
@@ -202,7 +247,7 @@ func (c *Client) ListExpiringCertificates(days string) ([]map[string]interface{}
 	if certs, ok := response["certificates"].([]interface{}); ok {
 		return convertToMapArray(certs), nil
 	}
-	
+
 	// If response has an "array" marker indicating direct array response
 	if response["_is_array"] != nil {
 		if arr, ok := response["_array_data"].([]interface{}); ok {

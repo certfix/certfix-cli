@@ -91,11 +91,11 @@ var eventosListCmd = &cobra.Command{
 
 		// Table format
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSEVERITY\tSTATUS\tCREATED AT")
-		fmt.Fprintln(w, "----\t----\t--------\t------\t----------")
+		fmt.Fprintln(w, "ID\tNAME\tEXTERNAL ID\tCOUNTER\tSEVERITY\tSTATUS\tCREATED AT")
+		fmt.Fprintln(w, "----\t----\t-----------\t-------\t--------\t------\t----------")
 
 		for _, evento := range eventos {
-			id := fmt.Sprintf("%v", evento["evento_id"])
+			id := fmt.Sprintf("%v", evento["event_id"])
 			name := fmt.Sprintf("%v", evento["name"])
 			severity := strings.ToUpper(fmt.Sprintf("%v", evento["severity"]))
 			enabled := evento["enabled"].(bool)
@@ -110,7 +110,7 @@ var eventosListCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", id, name, severity, status, createdAt)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%v\t%s\t%s\t%s\n", id, name, evento["external_id"], evento["counter"], severity, status, createdAt)
 		}
 		w.Flush()
 
@@ -152,7 +152,7 @@ var eventosGetCmd = &cobra.Command{
 		}
 
 		// Pretty print
-		fmt.Printf("ID:          %v\n", response["evento_id"])
+		fmt.Printf("ID:          %v\n", response["event_id"])
 		fmt.Printf("Name:        %v\n", response["name"])
 		fmt.Printf("Severity:    %v\n", strings.ToUpper(fmt.Sprintf("%v", response["severity"])))
 		enabled := response["enabled"].(bool)
@@ -161,6 +161,12 @@ var eventosGetCmd = &cobra.Command{
 			status = "Active"
 		}
 		fmt.Printf("Status:      %s\n", status)
+		fmt.Printf("External ID: %v\n", response["external_id"])
+		fmt.Printf("Counter:     %v\n", response["counter"])
+		fmt.Printf("Reset Time:  %v %v\n", response["reset_time_value"], response["reset_time_unit"])
+		if response["last_event_at"] != nil {
+			fmt.Printf("Last Event:  %v\n", response["last_event_at"])
+		}
 		if response["created_at"] != nil {
 			fmt.Printf("Created At:  %v\n", response["created_at"])
 		}
@@ -183,6 +189,8 @@ var eventosCreateCmd = &cobra.Command{
 		name, _ := cmd.Flags().GetString("name")
 		severity, _ := cmd.Flags().GetString("severity")
 		enabled, _ := cmd.Flags().GetBool("enabled")
+		resetUnit, _ := cmd.Flags().GetString("reset-unit")
+		resetValue, _ := cmd.Flags().GetInt("reset-value")
 
 		// Validate required fields
 		if name == "" {
@@ -221,9 +229,11 @@ var eventosCreateCmd = &cobra.Command{
 
 		// Prepare payload
 		payload := map[string]interface{}{
-			"name":     name,
-			"severity": strings.ToLower(severity),
-			"enabled":  enabled,
+			"name":             name,
+			"severity":         strings.ToLower(severity),
+			"enabled":          enabled,
+			"reset_time_unit":  resetUnit,
+			"reset_time_value": resetValue,
 		}
 
 		log.Infof("Creating event: %s", name)
@@ -236,7 +246,7 @@ var eventosCreateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ Event created successfully\n")
-		fmt.Printf("ID:       %v\n", response["evento_id"])
+		fmt.Printf("ID:       %v\n", response["event_id"])
 		fmt.Printf("Name:     %v\n", response["name"])
 		fmt.Printf("Severity: %v\n", strings.ToUpper(fmt.Sprintf("%v", response["severity"])))
 		enabledStatus := "Inactive"
@@ -262,6 +272,8 @@ var eventosUpdateCmd = &cobra.Command{
 		severity, _ := cmd.Flags().GetString("severity")
 		enabled := cmd.Flags().Changed("enabled")
 		enabledValue, _ := cmd.Flags().GetBool("enabled")
+		resetUnit, _ := cmd.Flags().GetString("reset-unit")
+		resetValue, _ := cmd.Flags().GetInt("reset-value")
 
 		// Build update payload
 		payload := make(map[string]interface{})
@@ -291,6 +303,14 @@ var eventosUpdateCmd = &cobra.Command{
 			payload["enabled"] = enabledValue
 		}
 
+		if cmd.Flags().Changed("reset-unit") {
+			payload["reset_time_unit"] = resetUnit
+		}
+
+		if cmd.Flags().Changed("reset-value") {
+			payload["reset_time_value"] = resetValue
+		}
+
 		if len(payload) == 0 {
 			cmd.SilenceUsage = true
 			return fmt.Errorf("no fields to update (use --name, --severity, or --enabled)")
@@ -317,7 +337,7 @@ var eventosUpdateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ Event updated successfully\n")
-		fmt.Printf("ID:       %v\n", response["evento_id"])
+		fmt.Printf("ID:       %v\n", response["event_id"])
 		fmt.Printf("Name:     %v\n", response["name"])
 		fmt.Printf("Severity: %v\n", strings.ToUpper(fmt.Sprintf("%v", response["severity"])))
 		enabledStatus := "Inactive"
@@ -470,6 +490,8 @@ func init() {
 	eventosCreateCmd.Flags().StringP("name", "n", "", "Name of the event (required)")
 	eventosCreateCmd.Flags().StringP("severity", "s", "", "Severity level: low, medium, high, critical (required)")
 	eventosCreateCmd.Flags().BoolP("enabled", "e", true, "Enable the event immediately (default: true)")
+	eventosCreateCmd.Flags().String("reset-unit", "hours", "Reset unit: minutes, hours, days")
+	eventosCreateCmd.Flags().Int("reset-value", 0, "Reset counter if no events within this value (0 = never)")
 	eventosCreateCmd.MarkFlagRequired("name")
 	eventosCreateCmd.MarkFlagRequired("severity")
 
@@ -477,6 +499,8 @@ func init() {
 	eventosUpdateCmd.Flags().StringP("name", "n", "", "New name for the event")
 	eventosUpdateCmd.Flags().StringP("severity", "s", "", "New severity level: low, medium, high, critical")
 	eventosUpdateCmd.Flags().BoolP("enabled", "e", false, "Enable or disable the event")
+	eventosUpdateCmd.Flags().String("reset-unit", "", "New reset unit: minutes, hours, days")
+	eventosUpdateCmd.Flags().Int("reset-value", 0, "New reset counter value")
 
 	// Delete command flags
 	eventosDeleteCmd.Flags().BoolP("force", "f", false, "Force deletion without confirmation")

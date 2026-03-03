@@ -43,21 +43,14 @@ var dashboardCmd = &cobra.Command{
 
 		printStat := func(label string, key string) {
 			if v, ok := response[key]; ok && v != nil {
-				fmt.Printf("%-30s %v\n", label+":", v)
+				fmt.Printf("%-35s %v\n", label+":", v)
 			}
 		}
 
-		printStat("Total Services", "total_services")
-		printStat("Active Services", "active_services")
-		printStat("Total Instances", "total_instances")
-		printStat("Online Instances", "online_instances")
-		printStat("Total Certificates", "total_certificates")
-		printStat("Valid Certificates", "valid_certificates")
-		printStat("Revoked Certificates", "revoked_certificates")
-		printStat("Expiring Soon (7d)", "expiring_soon")
-		printStat("Total Policies", "total_policies")
-		printStat("Active Policies", "active_policies")
-		printStat("Total Service Groups", "total_service_groups")
+		printStat("Active Services", "activeServices")
+		printStat("Active Instances", "activeInstances")
+		printStat("Active Certificates", "activeCertificates")
+		printStat("Total Certificates Generated", "totalCertificatesGenerated")
 
 		return nil
 	},

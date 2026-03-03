@@ -95,6 +95,11 @@ var ikCreateCmd = &cobra.Command{
 		name := args[0]
 		expiresIn, _ := cmd.Flags().GetInt("expires-in")
 
+		if expiresIn < 0 {
+			cmd.SilenceUsage = true
+			return fmt.Errorf("expires-in must be greater than 0 (use 0 or omit for no expiration)")
+		}
+
 		token, err := auth.GetToken()
 		if err != nil {
 			return err
@@ -104,8 +109,10 @@ var ikCreateCmd = &cobra.Command{
 		apiClient := client.NewHTTPClient(endpoint)
 
 		payload := map[string]interface{}{
-			"name":            name,
-			"expires_in_days": expiresIn,
+			"name": name,
+		}
+		if expiresIn > 0 {
+			payload["expires_in_days"] = expiresIn
 		}
 
 		response, err := apiClient.PostWithAuth("/integration-keys", payload, token)

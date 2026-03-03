@@ -109,18 +109,30 @@ func (c *HTTPClient) request(method, endpoint string, payload interface{}, token
 	// Check status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Debugf("Response status: %d, body: %s", resp.StatusCode, string(responseBody))
-		
+
+		if resp.StatusCode == 401 || resp.StatusCode == 403 {
+			return nil, fmt.Errorf("session expired or unauthorized: please run 'certfix login'")
+		}
+
 		// Extract message from standardized error response format
 		var errorResponse map[string]interface{}
 		if err := json.Unmarshal(responseBody, &errorResponse); err == nil {
-			// Check for details.message pattern
+			// Check for details.message pattern (nested map)
 			if details, ok := errorResponse["details"].(map[string]interface{}); ok {
 				if message, ok := details["message"].(string); ok {
 					return nil, fmt.Errorf("%s", message)
 				}
 			}
+			// Check for top-level message field
+			if message, ok := errorResponse["message"].(string); ok {
+				return nil, fmt.Errorf("%s", message)
+			}
+			// Check for top-level error field
+			if errMsg, ok := errorResponse["error"].(string); ok {
+				return nil, fmt.Errorf("%s", errMsg)
+			}
 		}
-		
+
 		// Fallback to full error message
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(responseBody))
 	}

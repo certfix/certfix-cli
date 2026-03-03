@@ -144,6 +144,7 @@ var usersCreateCmd = &cobra.Command{
 		name, _ := cmd.Flags().GetString("name")
 		email, _ := cmd.Flags().GetString("email")
 		password, _ := cmd.Flags().GetString("password")
+		groupID, _ := cmd.Flags().GetString("group-id")
 		outputFormat, _ := cmd.Flags().GetString("output")
 
 		if name == "" {
@@ -180,13 +181,30 @@ var usersCreateCmd = &cobra.Command{
 			return fmt.Errorf("failed to create user: %w", err)
 		}
 
+		userID := fmt.Sprintf("%v", response["user_id"])
+
+		if groupID != "" {
+			groupPayload := map[string]interface{}{
+				"user_group_id": groupID,
+			}
+			_, err := apiClient.PostWithAuth(fmt.Sprintf("/users/%s/groups", userID), groupPayload, token)
+			if err != nil {
+				cmd.SilenceUsage = true
+				return fmt.Errorf("user created (id: %s) but failed to assign group: %w", userID, err)
+			}
+		}
+
 		if outputFormat == "json" {
 			data, _ := json.MarshalIndent(response, "", "  ")
 			fmt.Println(string(data))
 			return nil
 		}
 
-		fmt.Printf("✓ User created successfully\n")
+		if groupID != "" {
+			fmt.Printf("✓ User created successfully and assigned to group %s\n", groupID)
+		} else {
+			fmt.Printf("✓ User created successfully\n")
+		}
 
 		return nil
 	},
@@ -366,6 +384,7 @@ func init() {
 	usersCreateCmd.Flags().StringP("name", "n", "", "Full name of the user (required)")
 	usersCreateCmd.Flags().StringP("email", "e", "", "Email address of the user (required)")
 	usersCreateCmd.Flags().StringP("password", "p", "", "Password for the user (required)")
+	usersCreateCmd.Flags().StringP("group-id", "g", "", "User group ID to assign the user to after creation")
 	usersCreateCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 	usersCreateCmd.MarkFlagRequired("name")
 	usersCreateCmd.MarkFlagRequired("email")

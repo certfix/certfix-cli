@@ -71,8 +71,8 @@ var ugListCmd = &cobra.Command{
 		fmt.Fprintln(w, "--\t----\t------\t----------")
 
 		for _, g := range groups {
-			id := fmt.Sprintf("%v", g["id"])
-			name := fmt.Sprintf("%v", g["name"])
+			id := fmt.Sprintf("%v", g["user_group_id"])
+			name := fmt.Sprintf("%v", g["user_group_name"])
 			if len(name) > 30 {
 				name = name[:27] + "..."
 			}
@@ -81,8 +81,8 @@ var ugListCmd = &cobra.Command{
 				status = "Enabled"
 			}
 			createdAt := ""
-			if g["created_at"] != nil {
-				if t, err := time.Parse(time.RFC3339, fmt.Sprintf("%v", g["created_at"])); err == nil {
+			if g["createdAt"] != nil {
+				if t, err := time.Parse(time.RFC3339, fmt.Sprintf("%v", g["createdAt"])); err == nil {
 					createdAt = t.Format("2006-01-02 15:04")
 				}
 			}
@@ -123,15 +123,15 @@ var ugGetCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Printf("ID:         %v\n", response["id"])
-		fmt.Printf("Name:       %v\n", response["name"])
+		fmt.Printf("ID:         %v\n", response["user_group_id"])
+		fmt.Printf("Name:       %v\n", response["user_group_name"])
 		status := "Disabled"
 		if enabled, ok := response["enabled"].(bool); ok && enabled {
 			status = "Enabled"
 		}
 		fmt.Printf("Status:     %s\n", status)
-		if response["created_at"] != nil {
-			fmt.Printf("Created At: %v\n", response["created_at"])
+		if response["createdAt"] != nil {
+			fmt.Printf("Created At: %v\n", response["createdAt"])
 		}
 
 		return nil
@@ -178,8 +178,8 @@ var ugCreateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ User group created successfully\n")
-		fmt.Printf("ID:   %v\n", response["id"])
-		fmt.Printf("Name: %v\n", response["name"])
+		fmt.Printf("ID:   %v\n", response["user_group_id"])
+		fmt.Printf("Name: %v\n", response["user_group_name"])
 
 		return nil
 	},
@@ -231,8 +231,8 @@ var ugUpdateCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✓ User group updated successfully\n")
-		fmt.Printf("ID:   %v\n", response["id"])
-		fmt.Printf("Name: %v\n", response["name"])
+		fmt.Printf("ID:   %v\n", response["user_group_id"])
+		fmt.Printf("Name: %v\n", response["user_group_name"])
 
 		return nil
 	},

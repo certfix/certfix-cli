@@ -71,6 +71,7 @@ type ServiceConfig struct {
 	WebhookURL string                  `yaml:"webhook_url,omitempty"`
 	GroupName  string                  `yaml:"group_name,omitempty"`  // Reference by name
 	PolicyName string                  `yaml:"policy_name,omitempty"` // Reference by name
+	DNSNames   []string                `yaml:"dns_names,omitempty"`
 	Keys       []ServiceKeyConfig      `yaml:"keys,omitempty"`
 	Relations  []ServiceRelationConfig `yaml:"relations,omitempty"`
 }

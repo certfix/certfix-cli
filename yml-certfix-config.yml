@@ -1,18 +1,49 @@
 # CertFix Configuration File
-# This file defines the complete configuration for CertFix resources
-# All resources will be created in the order: Events -> Policies -> Service Groups -> Services
+# Apply with: certfix apply yml-certfix-config.yml
+# Dry run:    certfix apply yml-certfix-config.yml --dry-run
+# Skip existing resources instead of failing:
+#             certfix apply yml-certfix-config.yml --skip-existing
+#
+# Resources are created in order:
+#   1. Events  →  2. Policies  →  3. Service Groups  →  4. Services
+#      (with keys and relations created after all services)
 
-# Events
+# ─── EVENTS ────────────────────────────────────────────────────────────────────
+# Events are external signals that can trigger certificate rotation.
+# severity: low | medium | high | critical
 events:
   - name: "Certificate Issued"
     severity: "low"
     enabled: true
-  - name: "DDoS Running"
+
+  - name: "Certificate Expiring Soon"
+    severity: "medium"
+    enabled: true
+
+  - name: "Certificate Compromised"
     severity: "critical"
     enabled: true
 
-# # Policies
+  - name: "DDoS Detected"
+    severity: "critical"
+    enabled: true
+
+  - name: "Maintenance Window Start"
+    severity: "high"
+    enabled: false          # disabled: won't trigger rotations until enabled
+
+
+# ─── POLICIES ──────────────────────────────────────────────────────────────────
+# strategy: gradual | maintenance_window | events
+#
+# gradual            — generates new cert first, waits for all agents to confirm,
+#                      then revokes old cert. Zero downtime.
+# maintenance_window — revokes old cert first, then generates new one. May cause
+#                      brief downtime. Controlled via cron schedule.
+# events             — rotation triggered by an external event (event_config).
 policies:
+
+  # --- Gradual strategy with cron schedule ---
   - name: "Proactive Rotation Policy"
     strategy: "gradual"
     enabled: true
@@ -21,19 +52,21 @@ policies:
       hour: "2"
       day: "*"
       month: "*"
-      weekday: "*"
+      weekday: "*"          # every day at 02:00
 
-  - name: "Standard Policy"
+  # --- Gradual strategy — weekly on weekdays ---
+  - name: "Standard Weekly Policy"
     strategy: "gradual"
     enabled: true
     cron_config:
-      minute: "0"
-      hour: "2"
+      minute: "30"
+      hour: "3"
       day: "*"
       month: "*"
-      weekday: "*"
+      weekday: "1-5"        # Mon–Fri at 03:30
 
-  - name: "Strict Policy"
+  # --- Maintenance window strategy — Sundays only ---
+  - name: "Strict Sunday Policy"
     strategy: "maintenance_window"
     enabled: true
     cron_config:
@@ -41,8 +74,28 @@ policies:
       hour: "3"
       day: "*"
       month: "*"
-      weekday: "0" # Sundays only
+      weekday: "0"          # Sundays at 03:00
 
+  # --- Maintenance window strategy — first day of every month ---
+  - name: "Monthly Rotation Policy"
+    strategy: "maintenance_window"
+    enabled: true
+    cron_config:
+      minute: "0"
+      hour: "1"
+      day: "1"
+      month: "*"
+      weekday: "*"          # 1st of each month at 01:00
+
+  # --- Events strategy — triggered by external event ---
+  - name: "Incident Response Policy"
+    strategy: "events"
+    enabled: true
+    event_config:
+      event_id: "Certificate Compromised"   # must match an event name above
+      total_events: 1                        # rotate after 1 occurrence
+
+  # --- Disabled policy (created but inactive) ---
   - name: "Development Policy"
     strategy: "gradual"
     enabled: false
@@ -53,78 +106,174 @@ policies:
       month: "*"
       weekday: "*"
 
-# Service Groups
+
+# ─── SERVICE GROUPS ────────────────────────────────────────────────────────────
 service_groups:
   - name: "Production Services"
-    description: "Production environment services"
+    description: "Customer-facing production environment services"
     enabled: true
 
   - name: "Staging Services"
-    description: "Staging environment services"
+    description: "Pre-production staging environment services"
     enabled: true
 
   - name: "Development Services"
-    description: "Development environment services"
+    description: "Internal development and testing services"
     enabled: true
 
-# # Services
+  - name: "Internal Services"
+    description: "Back-office and infrastructure services"
+    enabled: true
+
+  - name: "Deprecated Services"
+    description: "Services scheduled for decommission"
+    enabled: false          # disabled group
+
+
+# ─── SERVICES ──────────────────────────────────────────────────────────────────
+# hash         — unique identifier (alphanumeric, no spaces)
+# group_name   — must match a service_groups[].name above (or already existing)
+# policy_name  — must match a policies[].name above (or already existing)
+# dns_names    — extra DNS SANs added to the service certificate
+# keys         — service API keys used by agents to authenticate
+# relations    — service dependency matrix (which services this one connects to)
 services:
+
+  # ── Full example: all options used ──────────────────────────────────────────
   - hash: "api-gateway-prod"
     name: "API Gateway Production"
     active: true
-    webhook_url: "https://api.example.com/webhook"
+    webhook_url: "https://api.example.com/certfix/webhook"
     group_name: "Production Services"
-    policy_name: "Standard Policy"
+    policy_name: "Standard Weekly Policy"
+    dns_names:
+      - "api.example.com"
+      - "gateway.internal"
 
-    # Service Keys (API Keys)
     keys:
-      - name: "Production Key 1"
+      - name: "Agent Key Primary"
         enabled: true
         expiration_days: 365
 
-      - name: "Production Key 2"
+      - name: "Agent Key Secondary"
         enabled: true
         expiration_days: 180
 
-    # Service Relations (Matrix)
+      - name: "CI/CD Deploy Key"
+        enabled: false         # created but disabled
+        expiration_days: 90
+
     relations:
       - target_hash: "auth-service-prod"
         type: "depends-on"
-
       - target_hash: "database-service-prod"
         type: "connects-to"
+      - target_hash: "cache-service-prod"
+        type: "connects-to"
 
+  # ── Service with strict policy and webhook ───────────────────────────────────
   - hash: "auth-service-prod"
     name: "Authentication Service"
     active: true
-    webhook_url: "https://auth.example.com/webhook"
+    webhook_url: "https://auth.example.com/certfix/webhook"
     group_name: "Production Services"
-    policy_name: "Strict Policy"
+    policy_name: "Strict Sunday Policy"
+    dns_names:
+      - "auth.example.com"
 
     keys:
-      - name: "Auth Service Key"
+      - name: "Auth Agent Key"
         enabled: true
         expiration_days: 365
 
+    relations:
+      - target_hash: "database-service-prod"
+        type: "connects-to"
+
+  # ── Service without webhook or DNS names ─────────────────────────────────────
   - hash: "database-service-prod"
     name: "Database Service"
     active: true
     group_name: "Production Services"
-    policy_name: "Standard Policy"
+    policy_name: "Monthly Rotation Policy"
 
     keys:
-      - name: "DB Service Key"
+      - name: "DB Agent Key"
         enabled: true
         expiration_days: 730
 
+  # ── Service with long-lived key (no expiration) ──────────────────────────────
+  - hash: "cache-service-prod"
+    name: "Cache Service"
+    active: true
+    group_name: "Production Services"
+    policy_name: "Proactive Rotation Policy"
+
+    keys:
+      - name: "Cache Agent Key"
+        enabled: true
+        expiration_days: 36500  # ~100 years (long-lived key)
+
+  # ── Staging service ──────────────────────────────────────────────────────────
   - hash: "web-app-staging"
     name: "Web Application Staging"
     active: true
-    webhook_url: "https://staging.example.com/webhook"
+    webhook_url: "https://staging.example.com/certfix/webhook"
     group_name: "Staging Services"
     policy_name: "Development Policy"
+    dns_names:
+      - "staging.example.com"
 
     keys:
-      - name: "Staging Key"
+      - name: "Staging Agent Key"
         enabled: true
         expiration_days: 90
+
+    relations:
+      - target_hash: "auth-service-prod"
+        type: "depends-on"
+
+  # ── Service with incident-response (events) policy ───────────────────────────
+  - hash: "payment-service-prod"
+    name: "Payment Service"
+    active: true
+    webhook_url: "https://payments.example.com/certfix/webhook"
+    group_name: "Production Services"
+    policy_name: "Incident Response Policy"
+    dns_names:
+      - "payments.example.com"
+      - "pay.internal"
+
+    keys:
+      - name: "Payment Agent Key"
+        enabled: true
+        expiration_days: 365
+
+    relations:
+      - target_hash: "database-service-prod"
+        type: "connects-to"
+      - target_hash: "auth-service-prod"
+        type: "depends-on"
+
+  # ── Internal service, no external webhook ────────────────────────────────────
+  - hash: "log-aggregator-internal"
+    name: "Log Aggregator"
+    active: true
+    group_name: "Internal Services"
+    policy_name: "Standard Weekly Policy"
+
+    keys:
+      - name: "Log Agent Key"
+        enabled: true
+        expiration_days: 365
+
+  # ── Inactive service (created but not active) ────────────────────────────────
+  - hash: "legacy-api-v1"
+    name: "Legacy API v1"
+    active: false             # inactive: registered but not serving traffic
+    group_name: "Deprecated Services"
+
+    keys:
+      - name: "Legacy Key"
+        enabled: false
+        expiration_days: 30

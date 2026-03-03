@@ -104,6 +104,9 @@ resources will be rolled back automatically.`,
 					if s.WebhookURL != "" {
 						fmt.Printf("      Webhook: %s\n", s.WebhookURL)
 					}
+					if len(s.DNSNames) > 0 {
+						fmt.Printf("      DNS Names: %v\n", s.DNSNames)
+					}
 					if len(s.Keys) > 0 {
 						fmt.Printf("      Keys: %d\n", len(s.Keys))
 						for _, k := range s.Keys {
@@ -252,14 +255,19 @@ func createEvent(apiClient *client.HTTPClient, token string, event models.EventC
 		"enabled":  event.Enabled,
 	}
 
-	_, err := apiClient.PostWithAuth("/events", payload, token)
+	resp, err := apiClient.PostWithAuth("/events", payload, token)
 	if err != nil {
 		return err
 	}
 
+	eventID := event.Name // fallback
+	if id, ok := resp["event_id"].(string); ok && id != "" {
+		eventID = id
+	}
+
 	*createdResources = append(*createdResources, models.CreatedResource{
 		Type: "event",
-		Hash: event.Name,
+		Hash: eventID,
 	})
 
 	log.Infof("  ✓ Created successfully")
@@ -287,14 +295,19 @@ func createPolicy(apiClient *client.HTTPClient, token string, policy models.Poli
 		payload["event_config"] = policy.EventConfig
 	}
 
-	_, err := apiClient.PostWithAuth("/policies", payload, token)
+	resp, err := apiClient.PostWithAuth("/policies", payload, token)
 	if err != nil {
 		return err
 	}
 
+	policyID := policy.Name // fallback
+	if id, ok := resp["policy_id"].(string); ok && id != "" {
+		policyID = id
+	}
+
 	*createdResources = append(*createdResources, models.CreatedResource{
 		Type: "policy",
-		Hash: policy.Name,
+		Hash: policyID,
 	})
 
 	log.Infof("  ✓ Created successfully")
@@ -312,14 +325,19 @@ func createServiceGroup(apiClient *client.HTTPClient, token string, group models
 		"enabled":     group.Enabled,
 	}
 
-	_, err := apiClient.PostWithAuth("/service-groups", payload, token)
+	resp, err := apiClient.PostWithAuth("/service-groups", payload, token)
 	if err != nil {
 		return err
 	}
 
+	groupID := group.Name // fallback
+	if id, ok := resp["service_group_id"].(string); ok && id != "" {
+		groupID = id
+	}
+
 	*createdResources = append(*createdResources, models.CreatedResource{
 		Type: "service_group",
-		Hash: group.Name,
+		Hash: groupID,
 	})
 
 	log.Infof("  ✓ Created successfully")
@@ -343,6 +361,7 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 		"service_hash": service.Hash,
 		"service_name": service.Name,
 		"active":       service.Active,
+		"dns_names":    service.DNSNames,
 	}
 
 	if service.WebhookURL != "" {
@@ -400,13 +419,14 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 func createServiceKey(apiClient *client.HTTPClient, token string, serviceHash string, key models.ServiceKeyConfig, createdResources *[]models.CreatedResource) error {
 	log := logger.GetLogger()
 
-	payload := map[string]interface{}{
-		"key_name": key.Name,
-		"enabled":  key.Enabled,
+	if key.ExpirationDays <= 0 {
+		return fmt.Errorf("expiration_days must be a positive integer (got %d); use e.g. 365 for 1 year or 36500 for ~100 years", key.ExpirationDays)
 	}
 
-	if key.ExpirationDays > 0 {
-		payload["expiration_days"] = key.ExpirationDays
+	payload := map[string]interface{}{
+		"key_name":        key.Name,
+		"enabled":         key.Enabled,
+		"expiration_days": key.ExpirationDays,
 	}
 
 	response, err := apiClient.PostWithAuth(fmt.Sprintf("/services/%s/keys", serviceHash), payload, token)

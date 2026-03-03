@@ -14,10 +14,11 @@ import (
 )
 
 var integrationKeysCmd = &cobra.Command{
-	Use:     "integration-keys",
-	Aliases: []string{"ik", "integration-key"},
-	Short:   "Manage integration keys for external events",
-	Long:    `Manage integration keys used for secure external event ingestion.`,
+	Use:               "integration-keys",
+	Aliases:           []string{"ik", "integration-key"},
+	Short:             "Manage integration keys for external events",
+	Long:              `Manage integration keys used for secure external event ingestion.`,
+	PersistentPreRunE: requireSuperuser,
 }
 
 var ikListCmd = &cobra.Command{

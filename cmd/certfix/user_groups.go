@@ -15,10 +15,11 @@ import (
 )
 
 var userGroupsCmd = &cobra.Command{
-	Use:     "user-groups",
-	Aliases: []string{"ug", "user-group"},
-	Short:   "Manage user groups",
-	Long:    `Manage user groups including listing, creating, updating, enabling/disabling, and deleting groups.`,
+	Use:               "user-groups",
+	Aliases:           []string{"ug", "user-group"},
+	Short:             "Manage user groups",
+	Long:              `Manage user groups including listing, creating, updating, enabling/disabling, and deleting groups.`,
+	PersistentPreRunE: requireSuperuser,
 }
 
 var ugListCmd = &cobra.Command{

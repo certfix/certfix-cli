@@ -11,9 +11,10 @@ import (
 )
 
 var caCmd = &cobra.Command{
-	Use:   "ca",
-	Short: "Inspect the Certificate Authority",
-	Long:  `View information about the Certificate Authority (CA), its details, and the Certificate Revocation List (CRL).`,
+	Use:               "ca",
+	Short:             "Inspect the Certificate Authority",
+	Long:              `View information about the Certificate Authority (CA), its details, and the Certificate Revocation List (CRL).`,
+	PersistentPreRunE: requireSuperuser,
 }
 
 var caInfoCmd = &cobra.Command{

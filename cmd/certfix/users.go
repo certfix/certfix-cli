@@ -14,10 +14,11 @@ import (
 )
 
 var usersCmd = &cobra.Command{
-	Use:     "users",
-	Aliases: []string{"user"},
-	Short:   "Manage users",
-	Long:    `Manage users including listing, creating, updating, deleting, and managing super user status.`,
+	Use:               "users",
+	Aliases:           []string{"user"},
+	Short:             "Manage users",
+	Long:              `Manage users including listing, creating, updating, deleting, and managing super user status.`,
+	PersistentPreRunE: requireSuperuser,
 }
 
 var usersListCmd = &cobra.Command{

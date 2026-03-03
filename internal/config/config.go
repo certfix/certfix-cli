@@ -94,7 +94,7 @@ func GetDefaultEndpoint() string {
 	return viper.GetString("endpoint")
 }
 
-// GetAPIEndpoint returns the API endpoint with /api appended
+// GetAPIEndpoint returns the API endpoint with /api/v0.1.0 appended
 func GetAPIEndpoint() string {
 	baseURL := viper.GetString("endpoint")
 	if baseURL == "" {
@@ -104,7 +104,7 @@ func GetAPIEndpoint() string {
 	if len(baseURL) > 0 && baseURL[len(baseURL)-1] == '/' {
 		baseURL = baseURL[:len(baseURL)-1]
 	}
-	return baseURL + "/api"
+	return baseURL + "/api/v0.1.0"
 }
 
 // GetTimeout returns the configured timeout

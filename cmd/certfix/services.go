@@ -234,14 +234,22 @@ var servicesGetCmd = &cobra.Command{
 			webhookURL = fmt.Sprintf("%v", response["webhook_url"])
 		}
 		fmt.Printf("Webhook URL:  %s\n", webhookURL)
-		
-		active := response["active"].(bool)
+
+		activeVal, _ := response["active"].(bool)
 		status := "Inactive"
-		if active {
+		if activeVal {
 			status = "Active"
 		}
 		fmt.Printf("Status:       %s\n", status)
-		
+
+		if dns, ok := response["dns_names"].([]interface{}); ok && len(dns) > 0 {
+			parts := make([]string, 0, len(dns))
+			for _, d := range dns {
+				parts = append(parts, fmt.Sprintf("%v", d))
+			}
+			fmt.Printf("DNS Names:    %s\n", strings.Join(parts, ", "))
+		}
+
 		if response["created_at"] != nil {
 			fmt.Printf("Created At:   %v\n", response["created_at"])
 		}
@@ -270,6 +278,8 @@ and will be validated before creating the service.`,
 		groupID, _ := cmd.Flags().GetString("group")
 		policyID, _ := cmd.Flags().GetString("policy")
 		active, _ := cmd.Flags().GetBool("active")
+		dnsRaw, _ := cmd.Flags().GetString("dns")
+		outputFormat, _ := cmd.Flags().GetString("output")
 
 		// Validate required fields
 		if name == "" {
@@ -321,6 +331,18 @@ and will be validated before creating the service.`,
 			payload["politica_id"] = policyID
 		}
 
+		// Parse DNS names
+		var dnsNames []string
+		if dnsRaw != "" {
+			for _, d := range strings.Split(dnsRaw, ",") {
+				d = strings.TrimSpace(d)
+				if d != "" {
+					dnsNames = append(dnsNames, d)
+				}
+			}
+		}
+		payload["dns_names"] = dnsNames
+
 		log.Infof("Creating service: %s", name)
 
 		// Make request
@@ -330,27 +352,41 @@ and will be validated before creating the service.`,
 			return fmt.Errorf("failed to create service: %w", err)
 		}
 
+		if outputFormat == "json" {
+			data, _ := json.MarshalIndent(response, "", "  ")
+			fmt.Println(string(data))
+			return nil
+		}
+
 		fmt.Printf("✓ Service created successfully\n")
 		fmt.Printf("Hash:         %v\n", response["service_hash"])
 		fmt.Printf("Name:         %v\n", response["service_name"])
-		
+
 		groupName := "N/A"
 		if response["service_group_name"] != nil && response["service_group_name"] != "<nil>" {
 			groupName = fmt.Sprintf("%v", response["service_group_name"])
 		}
 		fmt.Printf("Group:        %s\n", groupName)
-		
+
 		policyName := "N/A"
-		if response["politica_name"] != nil && response["politica_name"] != "<nil>" {
-			policyName = fmt.Sprintf("%v", response["politica_name"])
+		if response["policy_name"] != nil && response["policy_name"] != "<nil>" {
+			policyName = fmt.Sprintf("%v", response["policy_name"])
 		}
 		fmt.Printf("Policy:       %s\n", policyName)
-		
+
 		activeStatus := "Inactive"
-		if response["active"].(bool) {
+		if active, ok := response["active"].(bool); ok && active {
 			activeStatus = "Active"
 		}
 		fmt.Printf("Status:       %s\n", activeStatus)
+
+		if dns, ok := response["dns_names"].([]interface{}); ok && len(dns) > 0 {
+			parts := make([]string, 0, len(dns))
+			for _, d := range dns {
+				parts = append(parts, fmt.Sprintf("%v", d))
+			}
+			fmt.Printf("DNS Names:    %s\n", strings.Join(parts, ", "))
+		}
 
 		return nil
 	},
@@ -374,6 +410,9 @@ var servicesUpdateCmd = &cobra.Command{
 		clearWebhook, _ := cmd.Flags().GetBool("clear-webhook")
 		clearGroup, _ := cmd.Flags().GetBool("clear-group")
 		clearPolicy, _ := cmd.Flags().GetBool("clear-policy")
+		dnsRaw, _ := cmd.Flags().GetString("dns")
+		clearDNS, _ := cmd.Flags().GetBool("clear-dns")
+		outputFormat, _ := cmd.Flags().GetString("output")
 
 		// Build update payload
 		payload := make(map[string]interface{})
@@ -404,9 +443,22 @@ var servicesUpdateCmd = &cobra.Command{
 			payload["active"] = activeValue
 		}
 
+		if dnsRaw != "" {
+			var dnsNames []string
+			for _, d := range strings.Split(dnsRaw, ",") {
+				d = strings.TrimSpace(d)
+				if d != "" {
+					dnsNames = append(dnsNames, d)
+				}
+			}
+			payload["dns_names"] = dnsNames
+		} else if clearDNS {
+			payload["dns_names"] = []string{}
+		}
+
 		if len(payload) == 0 {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("no fields to update (use --name, --webhook, --group, --policy, --active, or clear flags)")
+			return fmt.Errorf("no fields to update (use --name, --webhook, --group, --policy, --active, --dns, or clear flags)")
 		}
 
 		// Get authentication token
@@ -429,27 +481,41 @@ var servicesUpdateCmd = &cobra.Command{
 			return fmt.Errorf("failed to update service: %w", err)
 		}
 
+		if outputFormat == "json" {
+			data, _ := json.MarshalIndent(response, "", "  ")
+			fmt.Println(string(data))
+			return nil
+		}
+
 		fmt.Printf("✓ Service updated successfully\n")
 		fmt.Printf("Hash:         %v\n", response["service_hash"])
 		fmt.Printf("Name:         %v\n", response["service_name"])
-		
+
 		groupName := "N/A"
 		if response["service_group_name"] != nil && response["service_group_name"] != "<nil>" {
 			groupName = fmt.Sprintf("%v", response["service_group_name"])
 		}
 		fmt.Printf("Group:        %s\n", groupName)
-		
+
 		policyName := "N/A"
-		if response["politica_name"] != nil && response["politica_name"] != "<nil>" {
-			policyName = fmt.Sprintf("%v", response["politica_name"])
+		if response["policy_name"] != nil && response["policy_name"] != "<nil>" {
+			policyName = fmt.Sprintf("%v", response["policy_name"])
 		}
 		fmt.Printf("Policy:       %s\n", policyName)
-		
+
 		activeStatus := "Inactive"
-		if response["active"].(bool) {
+		if a, ok := response["active"].(bool); ok && a {
 			activeStatus = "Active"
 		}
 		fmt.Printf("Status:       %s\n", activeStatus)
+
+		if dns, ok := response["dns_names"].([]interface{}); ok && len(dns) > 0 {
+			parts := make([]string, 0, len(dns))
+			for _, d := range dns {
+				parts = append(parts, fmt.Sprintf("%v", d))
+			}
+			fmt.Printf("DNS Names:    %s\n", strings.Join(parts, ", "))
+		}
 
 		return nil
 	},
@@ -647,6 +713,8 @@ func init() {
 	servicesCreateCmd.Flags().StringP("group", "g", "", "Service group ID")
 	servicesCreateCmd.Flags().StringP("policy", "p", "", "Policy ID")
 	servicesCreateCmd.Flags().BoolP("active", "a", true, "Activate the service immediately (default: true)")
+	servicesCreateCmd.Flags().String("dns", "", "Comma-separated DNS names for the service certificate SAN (e.g. api.example.com,svc.internal)")
+	servicesCreateCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 	servicesCreateCmd.MarkFlagRequired("name")
 
 	// Update command flags
@@ -658,6 +726,9 @@ func init() {
 	servicesUpdateCmd.Flags().Bool("clear-webhook", false, "Clear the webhook URL")
 	servicesUpdateCmd.Flags().Bool("clear-group", false, "Clear the service group")
 	servicesUpdateCmd.Flags().Bool("clear-policy", false, "Clear the policy")
+	servicesUpdateCmd.Flags().String("dns", "", "Comma-separated DNS names for the service certificate SAN")
+	servicesUpdateCmd.Flags().Bool("clear-dns", false, "Clear all DNS names")
+	servicesUpdateCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 
 	// Delete command flags
 	servicesDeleteCmd.Flags().BoolP("force", "f", false, "Force deletion without confirmation")

@@ -144,12 +144,89 @@ var ikDeleteCmd = &cobra.Command{
 	},
 }
 
+var ikRotateCmd = &cobra.Command{
+	Use:   "rotate <key-id>",
+	Short: "Rotate an integration key (generate a new key value)",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		keyID := args[0]
+		outputFormat, _ := cmd.Flags().GetString("output")
+
+		token, err := auth.GetToken()
+		if err != nil {
+			return err
+		}
+
+		endpoint := config.GetAPIEndpoint()
+		apiClient := client.NewHTTPClient(endpoint)
+
+		response, err := apiClient.PatchWithAuth(fmt.Sprintf("/integration-keys/%s/rotate", keyID), nil, token)
+		if err != nil {
+			return fmt.Errorf("failed to rotate integration key: %w", err)
+		}
+
+		if outputFormat == "json" {
+			data, _ := json.MarshalIndent(response, "", "  ")
+			fmt.Println(string(data))
+			return nil
+		}
+
+		fmt.Printf("✓ Integration key rotated successfully\n")
+		fmt.Printf("Name: %v\n", response["name"])
+		fmt.Printf("Key:  %v\n", response["key"])
+		fmt.Println("\nIMPORTANT: Store the new key safely. It will not be shown again.")
+		return nil
+	},
+}
+
+var ikToggleCmd = &cobra.Command{
+	Use:   "toggle <key-id>",
+	Short: "Toggle an integration key (enable/disable)",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		keyID := args[0]
+		outputFormat, _ := cmd.Flags().GetString("output")
+
+		token, err := auth.GetToken()
+		if err != nil {
+			return err
+		}
+
+		endpoint := config.GetAPIEndpoint()
+		apiClient := client.NewHTTPClient(endpoint)
+
+		response, err := apiClient.PatchWithAuth(fmt.Sprintf("/integration-keys/%s/toggle", keyID), nil, token)
+		if err != nil {
+			return fmt.Errorf("failed to toggle integration key: %w", err)
+		}
+
+		if outputFormat == "json" {
+			data, _ := json.MarshalIndent(response, "", "  ")
+			fmt.Println(string(data))
+			return nil
+		}
+
+		status := "Disabled"
+		if enabled, ok := response["enabled"].(bool); ok && enabled {
+			status = "Enabled"
+		}
+		fmt.Printf("✓ Integration key toggled\n")
+		fmt.Printf("Name:   %v\n", response["name"])
+		fmt.Printf("Status: %s\n", status)
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(integrationKeysCmd)
 	integrationKeysCmd.AddCommand(ikListCmd)
 	integrationKeysCmd.AddCommand(ikCreateCmd)
+	integrationKeysCmd.AddCommand(ikRotateCmd)
+	integrationKeysCmd.AddCommand(ikToggleCmd)
 	integrationKeysCmd.AddCommand(ikDeleteCmd)
 
 	ikListCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 	ikCreateCmd.Flags().IntP("expires-in", "e", 0, "Expiration in days (0 = never)")
+	ikRotateCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
+	ikToggleCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
 }

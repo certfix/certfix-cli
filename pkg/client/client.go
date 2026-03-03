@@ -62,6 +62,11 @@ func (c *HTTPClient) DeleteWithAuthAndPayload(endpoint string, payload interface
 	return c.request("DELETE", endpoint, payload, token)
 }
 
+// PatchWithAuth makes a PATCH request with authentication
+func (c *HTTPClient) PatchWithAuth(endpoint string, payload interface{}, token string) (map[string]interface{}, error) {
+	return c.request("PATCH", endpoint, payload, token)
+}
+
 // request performs an HTTP request
 func (c *HTTPClient) request(method, endpoint string, payload interface{}, token string) (map[string]interface{}, error) {
 	log := logger.GetLogger()
@@ -120,25 +125,27 @@ func (c *HTTPClient) request(method, endpoint string, payload interface{}, token
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(responseBody))
 	}
 
-	// Parse response - handle both objects and arrays
+	// Parse response - handle objects, arrays, and non-JSON bodies
 	var result map[string]interface{}
 	if len(responseBody) > 0 {
-		// Check if response is an array
-		if len(responseBody) > 0 && responseBody[0] == '[' {
+		if responseBody[0] == '[' {
 			// Response is an array, wrap it in an object
 			var arrayResult []interface{}
 			if err := json.Unmarshal(responseBody, &arrayResult); err != nil {
 				return nil, fmt.Errorf("failed to parse response: %w", err)
 			}
 			result = map[string]interface{}{
-				"_is_array":    true,
-				"_array_data":  arrayResult,
+				"_is_array":   true,
+				"_array_data": arrayResult,
 			}
-		} else {
+		} else if responseBody[0] == '{' {
 			// Response is an object
 			if err := json.Unmarshal(responseBody, &result); err != nil {
 				return nil, fmt.Errorf("failed to parse response: %w", err)
 			}
+		} else {
+			// Non-JSON body (e.g. plain number or string) — treat as success with empty map
+			result = map[string]interface{}{}
 		}
 	}
 

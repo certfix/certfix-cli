@@ -2,7 +2,7 @@
 
 # Binary name
 BINARY_NAME=certfix
-VERSION?=1.0.0
+VERSION?=0.0.1
 BUILD_DIR=bin
 DIST_DIR=dist
 

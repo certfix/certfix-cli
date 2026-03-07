@@ -7,6 +7,8 @@ import (
 var (
 	// Version is set during build time via ldflags
 	Version = "dev"
+	// BuildDate is set during build time via ldflags
+	BuildDate = "unknown"
 )
 
 func main() {
@@ -14,5 +16,6 @@ func main() {
 	if Version != "dev" {
 		certfix.Version = Version
 	}
+	certfix.BuildDate = BuildDate
 	certfix.Execute()
 }

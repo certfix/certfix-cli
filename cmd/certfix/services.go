@@ -144,8 +144,8 @@ var servicesListCmd = &cobra.Command{
 			}
 			
 			policyName := "N/A"
-			if svc["politica_name"] != nil && svc["politica_name"] != "<nil>" {
-				policyName = fmt.Sprintf("%v", svc["politica_name"])
+			if svc["policy_name"] != nil && svc["policy_name"] != "<nil>" {
+				policyName = fmt.Sprintf("%v", svc["policy_name"])
 				if len(policyName) > 20 {
 					policyName = policyName[:17] + "..."
 				}
@@ -220,12 +220,12 @@ var servicesGetCmd = &cobra.Command{
 		fmt.Printf("Group:        %s (%s)\n", groupName, groupID)
 		
 		policyName := "N/A"
-		if response["politica_name"] != nil && response["politica_name"] != "<nil>" {
-			policyName = fmt.Sprintf("%v", response["politica_name"])
+		if response["policy_name"] != nil && response["policy_name"] != "<nil>" {
+			policyName = fmt.Sprintf("%v", response["policy_name"])
 		}
 		policyID := "N/A"
-		if response["politica_id"] != nil && response["politica_id"] != "<nil>" {
-			policyID = fmt.Sprintf("%v", response["politica_id"])
+		if response["policy_id"] != nil && response["policy_id"] != "<nil>" {
+			policyID = fmt.Sprintf("%v", response["policy_id"])
 		}
 		fmt.Printf("Policy:       %s (%s)\n", policyName, policyID)
 		
@@ -328,7 +328,7 @@ and will be validated before creating the service.`,
 			payload["service_group_id"] = groupID
 		}
 		if policyID != "" {
-			payload["politica_id"] = policyID
+			payload["policy_id"] = policyID
 		}
 
 		// Parse DNS names
@@ -434,9 +434,9 @@ var servicesUpdateCmd = &cobra.Command{
 		}
 
 		if policyID != "" {
-			payload["politica_id"] = policyID
+			payload["policy_id"] = policyID
 		} else if clearPolicy {
-			payload["politica_id"] = nil
+			payload["policy_id"] = nil
 		}
 
 		if active {

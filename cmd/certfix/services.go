@@ -229,6 +229,12 @@ var servicesGetCmd = &cobra.Command{
 		}
 		fmt.Printf("Policy:       %s (%s)\n", policyName, policyID)
 		
+		reloadSvc := "N/A"
+		if response["reload_service"] != nil && response["reload_service"] != "<nil>" {
+			reloadSvc = fmt.Sprintf("%v", response["reload_service"])
+		}
+		fmt.Printf("Reload:       %s\n", reloadSvc)
+
 		webhookURL := "N/A"
 		if response["webhook_url"] != nil && response["webhook_url"] != "<nil>" {
 			webhookURL = fmt.Sprintf("%v", response["webhook_url"])
@@ -277,6 +283,7 @@ and will be validated before creating the service.`,
 		webhookURL, _ := cmd.Flags().GetString("webhook")
 		groupID, _ := cmd.Flags().GetString("group")
 		policyID, _ := cmd.Flags().GetString("policy")
+		reloadService, _ := cmd.Flags().GetString("reload-service")
 		active, _ := cmd.Flags().GetBool("active")
 		dnsRaw, _ := cmd.Flags().GetString("dns")
 		outputFormat, _ := cmd.Flags().GetString("output")
@@ -329,6 +336,9 @@ and will be validated before creating the service.`,
 		}
 		if policyID != "" {
 			payload["policy_id"] = policyID
+		}
+		if reloadService != "" {
+			payload["reload_service"] = reloadService
 		}
 
 		// Parse DNS names
@@ -388,6 +398,10 @@ and will be validated before creating the service.`,
 			fmt.Printf("DNS Names:    %s\n", strings.Join(parts, ", "))
 		}
 
+		if response["reload_service"] != nil && response["reload_service"] != "<nil>" {
+			fmt.Printf("Reload:       %v\n", response["reload_service"])
+		}
+
 		return nil
 	},
 }
@@ -405,6 +419,8 @@ var servicesUpdateCmd = &cobra.Command{
 		webhookURL, _ := cmd.Flags().GetString("webhook")
 		groupID, _ := cmd.Flags().GetString("group")
 		policyID, _ := cmd.Flags().GetString("policy")
+		reloadService, _ := cmd.Flags().GetString("reload-service")
+		clearReload, _ := cmd.Flags().GetBool("clear-reload")
 		active := cmd.Flags().Changed("active")
 		activeValue, _ := cmd.Flags().GetBool("active")
 		clearWebhook, _ := cmd.Flags().GetBool("clear-webhook")
@@ -439,6 +455,12 @@ var servicesUpdateCmd = &cobra.Command{
 			payload["policy_id"] = nil
 		}
 
+		if reloadService != "" {
+			payload["reload_service"] = reloadService
+		} else if clearReload {
+			payload["reload_service"] = nil
+		}
+
 		if active {
 			payload["active"] = activeValue
 		}
@@ -458,7 +480,7 @@ var servicesUpdateCmd = &cobra.Command{
 
 		if len(payload) == 0 {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("no fields to update (use --name, --webhook, --group, --policy, --active, --dns, or clear flags)")
+			return fmt.Errorf("no fields to update (use --name, --webhook, --group, --policy, --reload-service, --active, --dns, or clear flags)")
 		}
 
 		// Get authentication token
@@ -515,6 +537,10 @@ var servicesUpdateCmd = &cobra.Command{
 				parts = append(parts, fmt.Sprintf("%v", d))
 			}
 			fmt.Printf("DNS Names:    %s\n", strings.Join(parts, ", "))
+		}
+
+		if response["reload_service"] != nil && response["reload_service"] != "<nil>" {
+			fmt.Printf("Reload:       %v\n", response["reload_service"])
 		}
 
 		return nil
@@ -712,6 +738,7 @@ func init() {
 	servicesCreateCmd.Flags().StringP("webhook", "w", "", "Webhook URL for the service")
 	servicesCreateCmd.Flags().StringP("group", "g", "", "Service group ID")
 	servicesCreateCmd.Flags().StringP("policy", "p", "", "Policy ID")
+	servicesCreateCmd.Flags().String("reload-service", "", "Shell command to run after certificate rotation (e.g. 'systemctl reload nginx')")
 	servicesCreateCmd.Flags().BoolP("active", "a", true, "Activate the service immediately (default: true)")
 	servicesCreateCmd.Flags().String("dns", "", "Comma-separated DNS names for the service certificate SAN (e.g. api.example.com,svc.internal)")
 	servicesCreateCmd.Flags().StringP("output", "o", "table", "Output format (table, json)")
@@ -722,6 +749,8 @@ func init() {
 	servicesUpdateCmd.Flags().StringP("webhook", "w", "", "New webhook URL for the service")
 	servicesUpdateCmd.Flags().StringP("group", "g", "", "New service group ID")
 	servicesUpdateCmd.Flags().StringP("policy", "p", "", "New policy ID")
+	servicesUpdateCmd.Flags().String("reload-service", "", "Shell command to run after certificate rotation (e.g. 'systemctl reload nginx')")
+	servicesUpdateCmd.Flags().Bool("clear-reload", false, "Clear the reload service command")
 	servicesUpdateCmd.Flags().BoolP("active", "a", false, "Activate or deactivate the service")
 	servicesUpdateCmd.Flags().Bool("clear-webhook", false, "Clear the webhook URL")
 	servicesUpdateCmd.Flags().Bool("clear-group", false, "Clear the service group")

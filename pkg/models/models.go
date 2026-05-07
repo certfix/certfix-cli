@@ -65,15 +65,16 @@ type ServiceGroupConfig struct {
 
 // ServiceConfig represents a service configuration
 type ServiceConfig struct {
-	Hash       string                  `yaml:"hash"`
-	Name       string                  `yaml:"name"`
-	Active     bool                    `yaml:"active"`
-	WebhookURL string                  `yaml:"webhook_url,omitempty"`
-	GroupName  string                  `yaml:"group_name,omitempty"`  // Reference by name
-	PolicyName string                  `yaml:"policy_name,omitempty"` // Reference by name
-	DNSNames   []string                `yaml:"dns_names,omitempty"`
-	Keys       []ServiceKeyConfig      `yaml:"keys,omitempty"`
-	Relations  []ServiceRelationConfig `yaml:"relations,omitempty"`
+	Hash          string                  `yaml:"hash"`
+	Name          string                  `yaml:"name"`
+	Active        bool                    `yaml:"active"`
+	WebhookURL    string                  `yaml:"webhook_url,omitempty"`
+	GroupName     string                  `yaml:"group_name,omitempty"`     // Reference by name
+	PolicyName    string                  `yaml:"policy_name,omitempty"`    // Reference by name
+	ReloadService string                  `yaml:"reload_service,omitempty"` // Shell command to run after cert rotation
+	DNSNames      []string                `yaml:"dns_names,omitempty"`
+	Keys          []ServiceKeyConfig      `yaml:"keys,omitempty"`
+	Relations     []ServiceRelationConfig `yaml:"relations,omitempty"`
 }
 
 // ServiceKeyConfig represents an API key configuration

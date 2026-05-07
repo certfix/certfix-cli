@@ -107,6 +107,9 @@ resources will be rolled back automatically.`,
 					if len(s.DNSNames) > 0 {
 						fmt.Printf("      DNS Names: %v\n", s.DNSNames)
 					}
+					if s.ReloadService != "" {
+						fmt.Printf("      Reload Service: %s\n", s.ReloadService)
+					}
 					if len(s.Keys) > 0 {
 						fmt.Printf("      Keys: %d\n", len(s.Keys))
 						for _, k := range s.Keys {
@@ -366,6 +369,10 @@ func createService(apiClient *client.HTTPClient, token string, service models.Se
 
 	if service.WebhookURL != "" {
 		payload["webhook_url"] = service.WebhookURL
+	}
+
+	if service.ReloadService != "" {
+		payload["reload_service"] = service.ReloadService
 	}
 
 	// Look up service group ID by name

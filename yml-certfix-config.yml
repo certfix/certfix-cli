@@ -131,12 +131,13 @@ service_groups:
 
 
 # ─── SERVICES ──────────────────────────────────────────────────────────────────
-# hash         — unique identifier (alphanumeric, no spaces)
-# group_name   — must match a service_groups[].name above (or already existing)
-# policy_name  — must match a policies[].name above (or already existing)
-# dns_names    — extra DNS SANs added to the service certificate
-# keys         — service API keys used by agents to authenticate
-# relations    — service dependency matrix (which services this one connects to)
+# hash           — unique identifier (alphanumeric, no spaces)
+# group_name     — must match a service_groups[].name above (or already existing)
+# policy_name    — must match a policies[].name above (or already existing)
+# dns_names      — extra DNS SANs added to the service certificate
+# reload_service — shell command the agent runs after rotating the certificate (e.g. systemctl reload nginx)
+# keys           — service API keys used by agents to authenticate
+# relations      — service dependency matrix (which services this one connects to)
 services:
 
   # ── Full example: all options used ──────────────────────────────────────────
@@ -146,6 +147,7 @@ services:
     webhook_url: "https://api.example.com/certfix/webhook"
     group_name: "Production Services"
     policy_name: "Standard Weekly Policy"
+    reload_service: "systemctl reload nginx"
     dns_names:
       - "api.example.com"
       - "gateway.internal"
